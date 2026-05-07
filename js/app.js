@@ -184,11 +184,13 @@ const App = (() => {
       vote.timestamp
     ];
     const subject = fields.join(c.MAIL.FIELD_SEP);
-    const params = new URLSearchParams({
-      subject: subject,
-      body: c.MAIL.BODY
-    });
-    return `mailto:${encodeURIComponent(c.MAIL.ADMIN_EMAIL)}?${params.toString()}`;
+    // Construimos los params manualmente para evitar que URLSearchParams
+    // codifique espacios como '+' (algunos clientes no lo decodifican).
+    // Usamos encodeURIComponent que codifica espacios como %20.
+    const url = 'mailto:' + encodeURIComponent(c.MAIL.ADMIN_EMAIL) +
+      '?subject=' + encodeURIComponent(subject) +
+      '&body=' + encodeURIComponent(c.MAIL.BODY);
+    return url;
   }
 
   /* ---------- SUBMIT ---------- */
