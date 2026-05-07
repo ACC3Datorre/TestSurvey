@@ -11,26 +11,23 @@
 
 <link rel="stylesheet" href="css/styles.css">
 
-<!-- Chart.js para los gráficos -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<!-- SheetJS para exportar a Excel -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body class="dark">
 
-<!-- TOPBAR -->
-<header class="topbar">
-  <a href="index.html" class="brand">
-    <span class="chev">&gt;</span>
-    Recognition Points <span style="opacity:.55; font-weight:400">/ admin</span>
-  </a>
-  <div class="topbar-meta" id="adminTopMeta">
-    <span><span class="dot"></span> Sesión privada</span>
-  </div>
-</header>
-
 <!-- ============== LOGIN SCREEN ============== -->
 <section class="screen active" id="screen-login">
+  <header class="topbar">
+    <a href="index.html" class="brand">
+      <span class="chev">&gt;</span>
+      Recognition Points <span style="opacity:.55; font-weight:400">/ admin</span>
+    </a>
+    <div class="topbar-meta">
+      <span><span class="dot"></span> Sesión privada</span>
+    </div>
+  </header>
+
   <div class="login-shell">
     <div class="login-left">
       <div>
@@ -69,100 +66,129 @@
       </div>
 
       <p class="helper" style="margin-top: 32px">
-        Si no recordás la contraseña, contactá al equipo técnico que armó este sitio.
+        Si no recordás la contraseña, contactá al equipo técnico.
       </p>
     </div>
   </div>
 </section>
 
-<!-- ============== DASHBOARD ============== -->
+<!-- ============== DASHBOARD (control-center layout) ============== -->
 <section class="screen" id="screen-dash">
-  <div class="dash-wrap">
 
-    <div class="dash-head">
-      <div>
-        <span class="eyebrow" style="color: var(--muted-2)">— Panel de resultados</span>
-        <h1 style="margin-top: 14px">
-          Recognition<br><em>Points</em> · FY26
-        </h1>
-      </div>
-      <div class="meta" id="dashMeta">— · —</div>
+  <!-- Header compacto -->
+  <header class="dash-bar">
+    <div class="dash-bar-left">
+      <a href="index.html" class="brand brand-sm">
+        <span class="chev">&gt;</span>
+        Recognition Points
+      </a>
+      <span class="bar-sep"></span>
+      <span class="bar-meta" id="dashMeta">— · —</span>
     </div>
-
-    <!-- KPIs -->
-    <div class="kpi-row" id="kpiRow">
-      <div class="kpi">
-        <div class="label">— Nominaciones</div>
-        <div class="value tabular"><em id="kpiTotal">0</em></div>
-        <div class="delta">enviadas en total</div>
-      </div>
-      <div class="kpi">
-        <div class="label">— Personas nominadas</div>
-        <div class="value tabular" id="kpiNominees">0</div>
-        <div class="delta">recibieron al menos un voto</div>
-      </div>
-      <div class="kpi">
-        <div class="label">— Votantes únicos</div>
-        <div class="value tabular" id="kpiVoters">0</div>
-        <div class="delta">participaron</div>
-      </div>
-      <div class="kpi">
-        <div class="label">— Avg / votante</div>
-        <div class="value tabular" id="kpiAvg">0</div>
-        <div class="delta">nominaciones por persona</div>
-      </div>
-    </div>
-
-    <!-- ACTIONS -->
-    <div style="display:flex; gap: 10px; flex-wrap: wrap; margin-bottom: 32px;">
-      <button class="btn btn-acn btn-sm" onclick="Admin.refresh()">↻ Actualizar</button>
-      <button class="btn btn-ghost btn-sm" onclick="Admin.exportExcel()" style="color:var(--paper); border-color: var(--ink-3);">⬇ Exportar Excel</button>
-      <button class="btn btn-ghost btn-sm" onclick="DataLayer.exportJSON()" style="color:var(--paper); border-color: var(--ink-3);">⬇ Backup JSON</button>
-      <label class="btn btn-ghost btn-sm" style="color:var(--paper); border-color: var(--ink-3); cursor:pointer; margin: 0;">
-        ⬆ Importar JSON
-        <input type="file" accept="application/json" id="importFile" style="display:none" onchange="Admin.importJSON(event)" />
+    <div class="dash-bar-right">
+      <button class="bar-btn" onclick="Admin.refresh()" title="Actualizar">
+        <span class="bar-btn-ico">↻</span> Refresh
+      </button>
+      <button class="bar-btn" onclick="Admin.exportExcel()" title="Exportar Excel">
+        <span class="bar-btn-ico">⬇</span> Excel
+      </button>
+      <button class="bar-btn" onclick="DataLayer.exportJSON()" title="Backup JSON">
+        <span class="bar-btn-ico">⬇</span> JSON
+      </button>
+      <label class="bar-btn" title="Importar JSON" style="cursor:pointer; margin:0;">
+        <span class="bar-btn-ico">⬆</span> Importar
+        <input type="file" accept="application/json" id="importFile"
+               style="display:none" onchange="Admin.importJSON(event)" />
       </label>
-      <button class="btn btn-danger btn-sm" onclick="Admin.askClear()">✕ Limpiar datos locales</button>
-      <button class="btn btn-ghost btn-sm" onclick="Admin.logout()" style="margin-left: auto; color:var(--paper); border-color: var(--ink-3);">↩ Cerrar sesión</button>
+      <button class="bar-btn bar-btn-danger" onclick="Admin.askClear()" title="Limpiar local">
+        <span class="bar-btn-ico">✕</span> Limpiar
+      </button>
+      <span class="bar-sep"></span>
+      <button class="bar-btn" onclick="Admin.logout()" title="Cerrar sesión">
+        <span class="bar-btn-ico">↩</span> Salir
+      </button>
+    </div>
+  </header>
+
+  <!-- Grid principal -->
+  <div class="dash-grid">
+
+    <!-- Título -->
+    <div class="dash-title">
+      <h1>Recognition <em>Points</em> · FY26</h1>
+      <span class="dash-title-sub" id="dashSub">Panel de resultados — FinOps · CFO&amp;EV</span>
     </div>
 
-    <!-- CHARTS ROW 1 -->
-    <div class="panel-grid two" style="margin-bottom: 24px;">
-      <div class="panel">
-        <h3>Ranking de nominados</h3>
-        <div class="panel-sub">Cantidad de votos recibidos por persona</div>
-        <canvas id="chartBar" height="320"></canvas>
+    <!-- KPI strip -->
+    <section class="kpi-strip" id="kpiRow">
+      <div class="kpi">
+        <div class="kpi-label">Nominaciones</div>
+        <div class="kpi-value tabular"><em id="kpiTotal">0</em></div>
+        <div class="kpi-foot">enviadas</div>
       </div>
-      <div class="panel">
-        <h3>Distribución de votos</h3>
-        <div class="panel-sub">Cómo se reparten entre los nominados</div>
-        <canvas id="chartPie" height="320"></canvas>
+      <div class="kpi">
+        <div class="kpi-label">Nominados</div>
+        <div class="kpi-value tabular" id="kpiNominees">0</div>
+        <div class="kpi-foot">recibieron al menos uno</div>
       </div>
-    </div>
+      <div class="kpi">
+        <div class="kpi-label">Votantes</div>
+        <div class="kpi-value tabular" id="kpiVoters">0</div>
+        <div class="kpi-foot">participaron</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Avg / votante</div>
+        <div class="kpi-value tabular" id="kpiAvg">0</div>
+        <div class="kpi-foot">nominaciones</div>
+      </div>
+      <div class="kpi kpi-mode">
+        <div class="kpi-label">Estado</div>
+        <div class="kpi-value-sm" id="kpiMode">LOCAL</div>
+        <div class="kpi-foot" id="kpiUpdated">recién actualizado</div>
+      </div>
+    </section>
 
-    <!-- CHARTS ROW 2 -->
-    <div class="panel-grid two" style="margin-bottom: 24px;">
-      <div class="panel">
+    <!-- Charts row -->
+    <section class="panel panel-bar">
+      <div class="panel-head">
+        <h3>Ranking</h3>
+        <span class="panel-sub">top 8 más nominados</span>
+      </div>
+      <div class="chart-box"><canvas id="chartBar"></canvas></div>
+    </section>
+
+    <section class="panel panel-pie">
+      <div class="panel-head">
+        <h3>Distribución</h3>
+        <span class="panel-sub">% de votos</span>
+      </div>
+      <div class="chart-box chart-box-pie"><canvas id="chartPie"></canvas></div>
+    </section>
+
+    <!-- Word clouds row -->
+    <section class="panel panel-cloud">
+      <div class="panel-head">
         <h3>Palabras frecuentes</h3>
-        <div class="panel-sub">Las más repetidas en todas las justificaciones</div>
-        <div class="cloud" id="wordCloud"></div>
+        <span class="panel-sub">en todas las justificaciones</span>
       </div>
-      <div class="panel">
-        <h3>Por nominado · top palabras</h3>
-        <div class="panel-sub">Qué destacan de cada persona — seleccioná una</div>
-        <select id="nomSelect" onchange="Admin.renderPerNomineeWords()"
-          style="background: var(--ink-3); color: var(--paper); border: 1px solid var(--ink-3);
-          padding: 10px 14px; font-family: var(--body); font-size: 13px;
-          width: 100%; margin-bottom: 16px; border-radius: 2px;">
-        </select>
-        <div class="cloud" id="perNomineeCloud"></div>
-      </div>
-    </div>
+      <div class="cloud" id="wordCloud"></div>
+    </section>
 
-    <!-- TABLE -->
-    <div class="panel">
-      <h3>Detalle de nominaciones</h3>
-      <div class="panel-sub">Ordenadas por persona más votada</div>
+    <section class="panel panel-cloud-nom">
+      <div class="panel-head">
+        <h3>Por nominado</h3>
+        <span class="panel-sub">qué destacan de cada uno</span>
+      </div>
+      <select id="nomSelect" class="nom-select" onchange="Admin.renderPerNomineeWords()"></select>
+      <div class="cloud cloud-sm" id="perNomineeCloud"></div>
+    </section>
+
+    <!-- Tabla -->
+    <section class="panel panel-table">
+      <div class="panel-head">
+        <h3>Detalle</h3>
+        <span class="panel-sub">ordenado por más votado · scroll vertical</span>
+      </div>
       <div class="tbl-wrap">
         <table class="tbl">
           <thead>
@@ -175,10 +201,10 @@
           <tbody id="resultsBody"></tbody>
         </table>
       </div>
-      <p class="helper" id="emptyState" style="display:none; text-align:center; padding: 32px 0; color: var(--muted-2);">
+      <p class="empty" id="emptyState" style="display:none">
         Todavía no hay nominaciones registradas.
       </p>
-    </div>
+    </section>
 
   </div>
 </section>
@@ -187,7 +213,7 @@
 <div class="modal" id="clearModal">
   <div class="modal-card">
     <h3>¿Limpiar datos locales?</h3>
-    <p>Se borrarán las nominaciones guardadas en este navegador. Si los datos están en SharePoint, no se afectan. Esta acción no se puede deshacer.</p>
+    <p>Se borrarán las nominaciones guardadas en este navegador. Esta acción no se puede deshacer.</p>
     <div class="modal-actions">
       <button class="btn btn-ghost btn-sm" onclick="Admin.cancelClear()">Cancelar</button>
       <button class="btn btn-danger btn-sm" onclick="Admin.confirmClear()">Sí, borrar</button>
@@ -197,11 +223,6 @@
 
 <!-- TOAST -->
 <div class="toast" id="toast"><span class="dot"></span><span id="toastMsg"></span></div>
-
-<footer>
-  <div>FinOps · CFO&amp;EV · Recognition Points · Panel privado</div>
-  <div id="footerStatus">Modo: local</div>
-</footer>
 
 <!-- SCRIPTS -->
 <script src="js/config.js"></script>
