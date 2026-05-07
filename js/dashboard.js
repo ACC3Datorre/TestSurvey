@@ -1,7 +1,6 @@
 /* ============================================================
-   ADMIN DASHBOARD — Recognition Points
-   Login + gráficos (bar, pie), word cloud global y por nominado,
-   tabla, exportar Excel, importar/exportar JSON.
+   ADMIN DASHBOARD — Recognition Points (v2 - control center)
+   Charts con altura fija, word cloud limitado, header compacto.
    ============================================================ */
 
 const Admin = (() => {
@@ -51,17 +50,23 @@ const Admin = (() => {
   /* ---------- dashboard ---------- */
   async function enterDashboard() {
     go('dash');
-    $('footerStatus').textContent = 'Modo: ' + window.APP_CONFIG.STORAGE_MODE;
-    $('dashMeta').textContent =
-      new Date().toLocaleDateString('es-AR', {
-        day: '2-digit', month: 'long', year: 'numeric'
-      }).toUpperCase() + ' · ' + window.APP_CONFIG.STORAGE_MODE.toUpperCase();
+    const dateStr = new Date().toLocaleDateString('es-AR', {
+      day: '2-digit', month: 'short', year: 'numeric'
+    }).toUpperCase();
+    const mode = window.APP_CONFIG.STORAGE_MODE.toUpperCase();
+    if ($('dashMeta')) $('dashMeta').textContent = `${dateStr} · ${mode}`;
+    if ($('kpiMode')) $('kpiMode').textContent = mode;
+    if ($('kpiUpdated')) $('kpiUpdated').textContent = 'recién actualizado';
     await refresh();
   }
 
   async function refresh() {
     try { votes = await DataLayer.getVotes(); }
     catch (err) { toast('Error: ' + err.message); votes = []; }
+    if ($('kpiUpdated')) {
+      const t = new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
+      $('kpiUpdated').textContent = `actualizado ${t}`;
+    }
     renderKPIs();
     renderBarChart();
     renderPieChart();
@@ -90,69 +95,106 @@ const Admin = (() => {
     return Object.entries(m).sort((a, b) => b[1] - a[1]);
   }
 
-  /* ---------- BAR CHART ---------- */
+  /* ---------- BAR CHART (top 8) ---------- */
   function renderBarChart() {
     const ctx = $('chartBar');
     if (!ctx) return;
-    const data = nomineeCounts().slice(0, 12);
+    const data = nomineeCounts().slice(0, 8);
+
+    if (chartBar) chartBar.destroy();
+
+    if (!data.length) {
+      // Limpiar si no hay datos
+      const cctx = ctx.getContext('2d');
+      cctx.clearRect(0, 0, ctx.width, ctx.height);
+      return;
+    }
+
     const labels = data.map(([n]) => displayName(n));
     const values = data.map(([_, c]) => c);
 
-    if (chartBar) chartBar.destroy();
     chartBar = new Chart(ctx, {
       type: 'bar',
       data: {
         labels,
         datasets: [{
           data: values,
-          backgroundColor: ctx => {
-            const i = ctx.dataIndex;
+          backgroundColor: barCtx => {
+            const i = barCtx.dataIndex;
             return i === 0 ? '#A100FF'
                  : i < 3   ? '#7500BA'
                  : '#4A0073';
           },
           borderRadius: 0,
-          barThickness: 18
+          barThickness: 14,
+          maxBarThickness: 18
         }]
       },
       options: {
         indexAxis: 'y',
-        plugins: { legend: { display: false } },
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0E0E12',
+            titleColor: '#FAFAF7',
+            bodyColor: '#FAFAF7',
+            borderColor: '#A100FF',
+            borderWidth: 1,
+            padding: 8,
+            titleFont: { family: 'Inter Tight', size: 11 },
+            bodyFont: { family: 'Inter Tight', size: 11 }
+          }
+        },
         scales: {
           x: {
-            ticks: { color: '#9A9A92', font: { family: 'Inter Tight', size: 11 }, precision: 0 },
+            ticks: {
+              color: '#9A9A92',
+              font: { family: 'Inter Tight', size: 10 },
+              precision: 0,
+              maxTicksLimit: 5
+            },
             grid: { color: '#2A2A33', drawBorder: false }
           },
           y: {
-            ticks: { color: '#FAFAF7', font: { family: 'Inter Tight', size: 12, weight: 500 } },
+            ticks: {
+              color: '#FAFAF7',
+              font: { family: 'Inter Tight', size: 11, weight: 500 },
+              autoSkip: false
+            },
             grid: { display: false, drawBorder: false }
           }
         },
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 600, easing: 'easeOutQuart' }
+        animation: { duration: 500, easing: 'easeOutQuart' }
       }
     });
   }
 
-  /* ---------- PIE CHART ---------- */
+  /* ---------- PIE / DOUGHNUT ---------- */
   function renderPieChart() {
     const ctx = $('chartPie');
     if (!ctx) return;
     const all = nomineeCounts();
-    // top 8 + "Otros"
-    const top = all.slice(0, 8);
-    const rest = all.slice(8).reduce((s, [_, c]) => s + c, 0);
-    const labels = top.map(([n]) => displayName(n));
+
+    if (chartPie) chartPie.destroy();
+    if (!all.length) return;
+
+    // top 6 + "Otros"
+    const top = all.slice(0, 6);
+    const rest = all.slice(6).reduce((s, [_, c]) => s + c, 0);
+    const labels = top.map(([n]) => {
+      const dn = displayName(n);
+      return dn.length > 18 ? dn.slice(0, 17) + '…' : dn;
+    });
     const values = top.map(([_, c]) => c);
     if (rest > 0) { labels.push('Otros'); values.push(rest); }
 
     const palette = [
       '#A100FF', '#7500BA', '#C159FF', '#5A0090',
-      '#D798FF', '#3D0061', '#E8C8FF', '#290042', '#6B6B66'
+      '#D798FF', '#3D0061', '#9A9A92'
     ];
 
-    if (chartPie) chartPie.destroy();
     chartPie = new Chart(ctx, {
       type: 'doughnut',
       data: {
@@ -165,20 +207,32 @@ const Admin = (() => {
         }]
       },
       options: {
+        responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           legend: {
             position: 'right',
             labels: {
               color: '#FAFAF7',
-              font: { family: 'Inter Tight', size: 11 },
-              boxWidth: 10, boxHeight: 10, padding: 12
+              font: { family: 'Inter Tight', size: 10 },
+              boxWidth: 8,
+              boxHeight: 8,
+              padding: 8
             }
+          },
+          tooltip: {
+            backgroundColor: '#0E0E12',
+            titleColor: '#FAFAF7',
+            bodyColor: '#FAFAF7',
+            borderColor: '#A100FF',
+            borderWidth: 1,
+            padding: 8,
+            titleFont: { family: 'Inter Tight', size: 11 },
+            bodyFont: { family: 'Inter Tight', size: 11 }
           }
         },
-        cutout: '55%',
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 700, easing: 'easeOutQuart' }
+        cutout: '58%',
+        animation: { duration: 600, easing: 'easeOutQuart' }
       }
     });
   }
@@ -187,7 +241,7 @@ const Admin = (() => {
   function tokenize(text) {
     return text
       .toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // sin acentos
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-zñ\s]/g, ' ')
       .split(/\s+/)
       .filter(w => w.length > 3 && !window.APP_CONFIG.STOPWORDS.has(w));
@@ -197,31 +251,32 @@ const Admin = (() => {
     texts.forEach(t => tokenize(t).forEach(w => { m[w] = (m[w] || 0) + 1; }));
     return Object.entries(m).sort((a, b) => b[1] - a[1]);
   }
-  function renderCloud(targetId, freq, max = 30) {
+  function renderCloud(targetId, freq, max = 25, minSize = 11, maxSize = 24) {
     const el = $(targetId);
     if (!el) return;
     if (!freq.length) {
-      el.innerHTML = '<span style="color: var(--muted-2); font-size: 13px; font-style: normal;">Sin datos suficientes.</span>';
+      el.innerHTML = '<span style="color: var(--muted-2); font-size: 11px; font-style: normal; letter-spacing: 0.04em;">Sin datos suficientes.</span>';
       return;
     }
     const top = freq.slice(0, max);
     const maxCount = top[0][1];
     const palette = ['#A100FF', '#C159FF', '#D798FF', '#FAFAF7', '#9A9A92'];
     el.innerHTML = top.map(([w, c], i) => {
-      // tamaño entre 14 y 44px, escala raíz cuadrada
-      const size = 14 + Math.round(30 * Math.sqrt(c / maxCount));
-      const color = palette[Math.min(i, palette.length - 1)];
-      return `<span style="font-size:${size}px; color:${color};">${w}</span>`;
+      const ratio = Math.sqrt(c / maxCount);
+      const size = Math.round(minSize + (maxSize - minSize) * ratio);
+      const colorIdx = Math.min(Math.floor(i / Math.ceil(top.length / palette.length)), palette.length - 1);
+      const color = palette[colorIdx];
+      return `<span style="font-size:${size}px; color:${color};" title="${c} menciones">${w}</span>`;
     }).join('');
   }
   function renderWordCloud() {
     const freq = wordFrequencies(votes.map(v => v.justification));
-    renderCloud('wordCloud', freq, 40);
+    renderCloud('wordCloud', freq, 25, 11, 24);
   }
 
-  /* ---------- per-nominee cloud ---------- */
   function renderNomineeSelect() {
     const sel = $('nomSelect');
+    if (!sel) return;
     const list = [...new Set(votes.map(v => v.nominee))]
       .sort((a, b) => a.localeCompare(b));
     if (!list.length) {
@@ -238,7 +293,7 @@ const Admin = (() => {
     if (!nom) { renderCloud('perNomineeCloud', []); return; }
     const texts = votes.filter(v => v.nominee === nom).map(v => v.justification);
     const freq = wordFrequencies(texts);
-    renderCloud('perNomineeCloud', freq, 25);
+    renderCloud('perNomineeCloud', freq, 18, 11, 22);
   }
 
   /* ---------- TABLE ---------- */
@@ -259,12 +314,12 @@ const Admin = (() => {
     body.innerHTML = sorted.map(v => `
       <tr>
         <td class="nominee">${displayName(v.nominee)}</td>
-        <td class="voter">${v.voter}</td>
+        <td class="voter">${escapeHtml(v.voter)}</td>
         <td class="just">${escapeHtml(v.justification)}</td>
       </tr>`).join('');
   }
   function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, c => ({
+    return String(s).replace(/[&<>"']/g, c => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[c]));
   }
@@ -276,7 +331,6 @@ const Admin = (() => {
     const sorted = [...votes].sort((a, b) =>
       (counts[b.nominee] - counts[a.nominee]) || a.nominee.localeCompare(b.nominee));
 
-    // Sheet 1 — detalle
     const detail = [
       ['Nominado', 'Votado por', 'Justificación', 'Timestamp'],
       ...sorted.map(v => [
@@ -286,7 +340,6 @@ const Admin = (() => {
     const ws1 = XLSX.utils.aoa_to_sheet(detail);
     ws1['!cols'] = [{ wch: 28 }, { wch: 24 }, { wch: 70 }, { wch: 22 }];
 
-    // Sheet 2 — resumen
     const grouped = {};
     sorted.forEach(v => {
       grouped[v.nominee] = grouped[v.nominee] || { count: 0, comments: [] };
@@ -341,12 +394,21 @@ const Admin = (() => {
       enterDashboard();
     } else {
       go('login');
-      setTimeout(() => $('loginUser').focus(), 80);
+      setTimeout(() => $('loginUser') && $('loginUser').focus(), 80);
     }
     document.addEventListener('keydown', e => {
       if (e.key === 'Enter' && $('screen-login').classList.contains('active')) {
         login();
       }
+    });
+    // Re-render charts on resize (Chart.js no reescala bien con grids)
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (chartBar) chartBar.resize();
+        if (chartPie) chartPie.resize();
+      }, 120);
     });
   }
 
