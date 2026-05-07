@@ -1192,3 +1192,8 @@ body.dark footer {
 .modal-actions {
   display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
 }
+
+/* ---------- Single-card layout (sin admin) ---------- */
+.action-grid-single { grid-template-columns: 1fr; }
+.action-grid-single .action-card { min-height: 240px; }
+.action-grid-single .action-card h3 { font-size: 36px; }
