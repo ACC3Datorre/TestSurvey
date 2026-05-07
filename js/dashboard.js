@@ -1,18 +1,15 @@
 /* ============================================================
-   ADMIN DASHBOARD — Recognition Points (v2 - control center)
-   Charts con altura fija, word cloud limitado, header compacto.
+   ADMIN — Recognition Points (v3 — Power BI redirect)
+   El dashboard custom desapareció. La jefa ve todo en Power BI.
+   Acá solo manejamos: login, link a PBI, fallback offline.
    ============================================================ */
 
 const Admin = (() => {
 
-  let chartBar, chartPie;
-  let votes = [];
-
-  /* ---------- helpers ---------- */
   const $ = (id) => document.getElementById(id);
 
   function displayName(name) {
-    return name.replace(/\./g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    return String(name).replace(/\./g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
   function toast(msg) {
     $('toastMsg').textContent = msg;
@@ -38,7 +35,7 @@ const Admin = (() => {
       return;
     }
     $('loginError').style.display = 'none';
-    enterDashboard();
+    enterAdmin();
   }
   function logout() {
     Auth.logout();
@@ -47,287 +44,92 @@ const Admin = (() => {
     $('loginPass').value = '';
   }
 
-  /* ---------- dashboard ---------- */
-  async function enterDashboard() {
-    go('dash');
-    const dateStr = new Date().toLocaleDateString('es-AR', {
+  /* ---------- admin landing ---------- */
+  function enterAdmin() {
+    go('admin');
+    const date = new Date().toLocaleDateString('es-AR', {
       day: '2-digit', month: 'short', year: 'numeric'
     }).toUpperCase();
-    const mode = window.APP_CONFIG.STORAGE_MODE.toUpperCase();
-    if ($('dashMeta')) $('dashMeta').textContent = `${dateStr} · ${mode}`;
-    if ($('kpiMode')) $('kpiMode').textContent = mode;
-    if ($('kpiUpdated')) $('kpiUpdated').textContent = 'recién actualizado';
-    await refresh();
-  }
+    if ($('dashMeta')) $('dashMeta').textContent = `${date} · MAIL+EXCEL+PBI`;
 
-  async function refresh() {
-    try { votes = await DataLayer.getVotes(); }
-    catch (err) { toast('Error: ' + err.message); votes = []; }
-    if ($('kpiUpdated')) {
-      const t = new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
-      $('kpiUpdated').textContent = `actualizado ${t}`;
-    }
-    renderKPIs();
-    renderBarChart();
-    renderPieChart();
-    renderWordCloud();
-    renderNomineeSelect();
-    renderPerNomineeWords();
-    renderTable();
-  }
-
-  /* ---------- KPIs ---------- */
-  function renderKPIs() {
-    const total = votes.length;
-    const nominees = new Set(votes.map(v => v.nominee)).size;
-    const voters = new Set(votes.map(v => v.voter.toLowerCase())).size;
-    const avg = voters ? (total / voters).toFixed(1) : '0';
-    $('kpiTotal').textContent = total;
-    $('kpiNominees').textContent = nominees;
-    $('kpiVoters').textContent = voters;
-    $('kpiAvg').textContent = avg;
-  }
-
-  /* ---------- counts ---------- */
-  function nomineeCounts() {
-    const m = {};
-    votes.forEach(v => { m[v.nominee] = (m[v.nominee] || 0) + 1; });
-    return Object.entries(m).sort((a, b) => b[1] - a[1]);
-  }
-
-  /* ---------- BAR CHART (top 8) ---------- */
-  function renderBarChart() {
-    const ctx = $('chartBar');
-    if (!ctx) return;
-    const data = nomineeCounts().slice(0, 8);
-
-    if (chartBar) chartBar.destroy();
-
-    if (!data.length) {
-      // Limpiar si no hay datos
-      const cctx = ctx.getContext('2d');
-      cctx.clearRect(0, 0, ctx.width, ctx.height);
-      return;
-    }
-
-    const labels = data.map(([n]) => displayName(n));
-    const values = data.map(([_, c]) => c);
-
-    chartBar = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{
-          data: values,
-          backgroundColor: barCtx => {
-            const i = barCtx.dataIndex;
-            return i === 0 ? '#A100FF'
-                 : i < 3   ? '#7500BA'
-                 : '#4A0073';
-          },
-          borderRadius: 0,
-          barThickness: 14,
-          maxBarThickness: 18
-        }]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#0E0E12',
-            titleColor: '#FAFAF7',
-            bodyColor: '#FAFAF7',
-            borderColor: '#A100FF',
-            borderWidth: 1,
-            padding: 8,
-            titleFont: { family: 'Inter Tight', size: 11 },
-            bodyFont: { family: 'Inter Tight', size: 11 }
-          }
-        },
-        scales: {
-          x: {
-            ticks: {
-              color: '#9A9A92',
-              font: { family: 'Inter Tight', size: 10 },
-              precision: 0,
-              maxTicksLimit: 5
-            },
-            grid: { color: '#2A2A33', drawBorder: false }
-          },
-          y: {
-            ticks: {
-              color: '#FAFAF7',
-              font: { family: 'Inter Tight', size: 11, weight: 500 },
-              autoSkip: false
-            },
-            grid: { display: false, drawBorder: false }
-          }
-        },
-        animation: { duration: 500, easing: 'easeOutQuart' }
+    // Configurar el link de Power BI
+    const pbiLink = $('pbiLink');
+    const pbiUrl = window.APP_CONFIG.POWER_BI.DASHBOARD_URL;
+    if (pbiLink) {
+      if (!pbiUrl || pbiUrl.startsWith('PEGAR_AQUI')) {
+        // Sin URL configurada: deshabilitamos visualmente y avisamos
+        pbiLink.classList.add('admin-card-disabled');
+        pbiLink.removeAttribute('href');
+        pbiLink.querySelector('.arrow').textContent = '⚠ URL no configurada';
+        pbiLink.onclick = (e) => {
+          e.preventDefault();
+          toast('Falta configurar POWER_BI.DASHBOARD_URL en js/config.js');
+        };
+      } else {
+        pbiLink.href = pbiUrl;
       }
-    });
+    }
+    renderFallbackPreview();
   }
 
-  /* ---------- PIE / DOUGHNUT ---------- */
-  function renderPieChart() {
-    const ctx = $('chartPie');
-    if (!ctx) return;
-    const all = nomineeCounts();
+  /* ---------- IMPORT JSON (fallback) ---------- */
+  async function importJSON(event) {
+    const f = event.target.files[0];
+    if (!f) return;
+    try {
+      const r = await DataLayer.importJSON(f);
+      toast(`Importado: +${r.added} (total ${r.total})`);
+      renderFallbackPreview();
+    } catch (e) { toast('Error: ' + e.message); }
+    event.target.value = '';
+  }
 
-    if (chartPie) chartPie.destroy();
-    if (!all.length) return;
+  /* ---------- IMPORT EXCEL (.xlsx de SharePoint) ----------
+     La jefa puede bajar el Excel desde SharePoint y arrastrarlo
+     acá si quiere ver un preview rápido sin abrir Power BI.
+  */
+  function importExcel(event) {
+    const f = event.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array' });
+        // Buscar la hoja con la tabla
+        const sheet = wb.Sheets['Votes'] || wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
-    // top 6 + "Otros"
-    const top = all.slice(0, 6);
-    const rest = all.slice(6).reduce((s, [_, c]) => s + c, 0);
-    const labels = top.map(([n]) => {
-      const dn = displayName(n);
-      return dn.length > 18 ? dn.slice(0, 17) + '…' : dn;
-    });
-    const values = top.map(([_, c]) => c);
-    if (rest > 0) { labels.push('Otros'); values.push(rest); }
+        // Mapear a nuestro formato
+        const votes = rows
+          .filter(r => r.id || r.nominee) // ignorar filas vacías
+          .map(r => ({
+            id: String(r.id || ''),
+            voter: String(r.voter || ''),
+            nominee: String(r.nominee || ''),
+            justification: String(r.justification || ''),
+            timestamp: String(r.timestamp || '')
+          }));
 
-    const palette = [
-      '#A100FF', '#7500BA', '#C159FF', '#5A0090',
-      '#D798FF', '#3D0061', '#9A9A92'
-    ];
-
-    chartPie = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels,
-        datasets: [{
-          data: values,
-          backgroundColor: palette,
-          borderColor: '#1A1A22',
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'right',
-            labels: {
-              color: '#FAFAF7',
-              font: { family: 'Inter Tight', size: 10 },
-              boxWidth: 8,
-              boxHeight: 8,
-              padding: 8
-            }
-          },
-          tooltip: {
-            backgroundColor: '#0E0E12',
-            titleColor: '#FAFAF7',
-            bodyColor: '#FAFAF7',
-            borderColor: '#A100FF',
-            borderWidth: 1,
-            padding: 8,
-            titleFont: { family: 'Inter Tight', size: 11 },
-            bodyFont: { family: 'Inter Tight', size: 11 }
-          }
-        },
-        cutout: '58%',
-        animation: { duration: 600, easing: 'easeOutQuart' }
+        // Reemplazar el storage local con esta data
+        localStorage.setItem('rcg_votes_v2', JSON.stringify(votes));
+        toast(`Excel importado: ${votes.length} nominaciones`);
+        renderFallbackPreview();
+      } catch (err) {
+        toast('Error al leer Excel: ' + err.message);
       }
-    });
-  }
-
-  /* ---------- WORD CLOUDS ---------- */
-  function tokenize(text) {
-    return text
-      .toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-zñ\s]/g, ' ')
-      .split(/\s+/)
-      .filter(w => w.length > 3 && !window.APP_CONFIG.STOPWORDS.has(w));
-  }
-  function wordFrequencies(texts) {
-    const m = {};
-    texts.forEach(t => tokenize(t).forEach(w => { m[w] = (m[w] || 0) + 1; }));
-    return Object.entries(m).sort((a, b) => b[1] - a[1]);
-  }
-  function renderCloud(targetId, freq, max = 25, minSize = 11, maxSize = 24) {
-    const el = $(targetId);
-    if (!el) return;
-    if (!freq.length) {
-      el.innerHTML = '<span style="color: var(--muted-2); font-size: 11px; font-style: normal; letter-spacing: 0.04em;">Sin datos suficientes.</span>';
-      return;
-    }
-    const top = freq.slice(0, max);
-    const maxCount = top[0][1];
-    const palette = ['#A100FF', '#C159FF', '#D798FF', '#FAFAF7', '#9A9A92'];
-    el.innerHTML = top.map(([w, c], i) => {
-      const ratio = Math.sqrt(c / maxCount);
-      const size = Math.round(minSize + (maxSize - minSize) * ratio);
-      const colorIdx = Math.min(Math.floor(i / Math.ceil(top.length / palette.length)), palette.length - 1);
-      const color = palette[colorIdx];
-      return `<span style="font-size:${size}px; color:${color};" title="${c} menciones">${w}</span>`;
-    }).join('');
-  }
-  function renderWordCloud() {
-    const freq = wordFrequencies(votes.map(v => v.justification));
-    renderCloud('wordCloud', freq, 25, 11, 24);
-  }
-
-  function renderNomineeSelect() {
-    const sel = $('nomSelect');
-    if (!sel) return;
-    const list = [...new Set(votes.map(v => v.nominee))]
-      .sort((a, b) => a.localeCompare(b));
-    if (!list.length) {
-      sel.innerHTML = '<option>— sin datos —</option>';
-      return;
-    }
-    sel.innerHTML = list.map((n, i) =>
-      `<option value="${n}" ${i === 0 ? 'selected' : ''}>${displayName(n)}</option>`
-    ).join('');
-  }
-  function renderPerNomineeWords() {
-    const sel = $('nomSelect');
-    const nom = sel ? sel.value : null;
-    if (!nom) { renderCloud('perNomineeCloud', []); return; }
-    const texts = votes.filter(v => v.nominee === nom).map(v => v.justification);
-    const freq = wordFrequencies(texts);
-    renderCloud('perNomineeCloud', freq, 18, 11, 22);
-  }
-
-  /* ---------- TABLE ---------- */
-  function renderTable() {
-    const body = $('resultsBody');
-    const empty = $('emptyState');
-    if (!votes.length) {
-      body.innerHTML = '';
-      empty.style.display = 'block';
-      return;
-    }
-    empty.style.display = 'none';
-    const counts = Object.fromEntries(nomineeCounts());
-    const sorted = [...votes].sort((a, b) => {
-      const d = counts[b.nominee] - counts[a.nominee];
-      return d !== 0 ? d : a.nominee.localeCompare(b.nominee);
-    });
-    body.innerHTML = sorted.map(v => `
-      <tr>
-        <td class="nominee">${displayName(v.nominee)}</td>
-        <td class="voter">${escapeHtml(v.voter)}</td>
-        <td class="just">${escapeHtml(v.justification)}</td>
-      </tr>`).join('');
-  }
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, c => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    }[c]));
+    };
+    reader.onerror = () => toast('No se pudo leer el archivo.');
+    reader.readAsArrayBuffer(f);
+    event.target.value = '';
   }
 
   /* ---------- EXPORT EXCEL ---------- */
-  function exportExcel() {
+  async function exportExcel() {
+    const votes = await DataLayer.getVotes();
     if (!votes.length) { toast('No hay datos para exportar.'); return; }
-    const counts = Object.fromEntries(nomineeCounts());
+
+    const counts = {};
+    votes.forEach(v => { counts[v.nominee] = (counts[v.nominee] || 0) + 1; });
     const sorted = [...votes].sort((a, b) =>
       (counts[b.nominee] - counts[a.nominee]) || a.nominee.localeCompare(b.nominee));
 
@@ -340,42 +142,32 @@ const Admin = (() => {
     const ws1 = XLSX.utils.aoa_to_sheet(detail);
     ws1['!cols'] = [{ wch: 28 }, { wch: 24 }, { wch: 70 }, { wch: 22 }];
 
-    const grouped = {};
-    sorted.forEach(v => {
-      grouped[v.nominee] = grouped[v.nominee] || { count: 0, comments: [] };
-      grouped[v.nominee].count++;
-      grouped[v.nominee].comments.push(v.justification);
-    });
-    const summary = [['Nominado', 'Votos', 'Comentarios']];
-    Object.keys(grouped)
-      .sort((a, b) => grouped[b].count - grouped[a].count)
-      .forEach(n => {
-        summary.push([
-          displayName(n),
-          grouped[n].count,
-          grouped[n].comments.map((c, i) => `${i + 1}. ${c}`).join('\n')
-        ]);
-      });
-    const ws2 = XLSX.utils.aoa_to_sheet(summary);
-    ws2['!cols'] = [{ wch: 28 }, { wch: 10 }, { wch: 90 }];
-
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws1, 'Detalle');
-    XLSX.utils.book_append_sheet(wb, ws2, 'Resumen');
     XLSX.writeFile(wb, `recognition_points_${new Date().toISOString().slice(0, 10)}.xlsx`);
     toast('Excel exportado');
   }
 
-  /* ---------- IMPORT JSON ---------- */
-  async function importJSON(event) {
-    const f = event.target.files[0];
-    if (!f) return;
-    try {
-      const r = await DataLayer.importJSON(f);
-      toast(`Importado: +${r.added} (total ${r.total})`);
-      await refresh();
-    } catch (e) { toast('Error: ' + e.message); }
-    event.target.value = '';
+  /* ---------- FALLBACK PREVIEW (mini KPIs en avanzado) ---------- */
+  async function renderFallbackPreview() {
+    const votes = await DataLayer.getVotes();
+    const preview = $('fallbackPreview');
+    if (!preview) return;
+    if (!votes.length) {
+      preview.style.display = 'none';
+      return;
+    }
+    preview.style.display = 'block';
+    $('fbTotal').textContent = votes.length;
+    $('fbNominees').textContent = new Set(votes.map(v => v.nominee)).size;
+    $('fbVoters').textContent = new Set(votes.map(v => v.voter.toLowerCase())).size;
+
+    const counts = {};
+    votes.forEach(v => { counts[v.nominee] = (counts[v.nominee] || 0) + 1; });
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+    $('fbTop').textContent = top
+      ? `${displayName(top[0])} (${top[1]})`
+      : '—';
   }
 
   /* ---------- CLEAR ---------- */
@@ -384,14 +176,14 @@ const Admin = (() => {
   function confirmClear() {
     DataLayer.clearLocal();
     cancelClear();
-    refresh();
+    renderFallbackPreview();
     toast('Datos locales eliminados');
   }
 
   /* ---------- INIT ---------- */
   function init() {
     if (Auth.isLoggedIn()) {
-      enterDashboard();
+      enterAdmin();
     } else {
       go('login');
       setTimeout(() => $('loginUser') && $('loginUser').focus(), 80);
@@ -401,20 +193,12 @@ const Admin = (() => {
         login();
       }
     });
-    // Re-render charts on resize (Chart.js no reescala bien con grids)
-    let resizeTimer;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        if (chartBar) chartBar.resize();
-        if (chartPie) chartPie.resize();
-      }, 120);
-    });
   }
 
   return {
-    init, login, logout, refresh, exportExcel, importJSON,
-    askClear, cancelClear, confirmClear, renderPerNomineeWords
+    init, login, logout,
+    importJSON, importExcel, exportExcel,
+    askClear, cancelClear, confirmClear
   };
 })();
 

@@ -1,7 +1,8 @@
 /* ============================================================
-   APP — Recognition Points (página pública)
-   Maneja el flujo de votación: bienvenida → identificación →
-   votación → confirmar otra → terminar.
+   APP — Recognition Points (v3 — mailto flow)
+   El submit arma un subject formato:
+     RP-FY26-VOTE|<id>|<voter>|<nominee>|<justification>|<timestamp>
+   y abre Outlook con mailto:.
    ============================================================ */
 
 const App = (() => {
@@ -13,6 +14,7 @@ const App = (() => {
 
   /* ---------- helpers ---------- */
   const $ = (id) => document.getElementById(id);
+  const cfg = () => window.APP_CONFIG;
 
   function initials(name) {
     return name.replace(/\./g, ' ').trim().split(/\s+/)
@@ -25,14 +27,17 @@ const App = (() => {
     $('toastMsg').textContent = msg;
     $('toast').classList.add('show');
     clearTimeout(toast._t);
-    toast._t = setTimeout(() => $('toast').classList.remove('show'), 3000);
+    toast._t = setTimeout(() => $('toast').classList.remove('show'), 3500);
+  }
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
 
-  /* ---------- people ---------- */
+  /* ---------- people (lista del equipo) ---------- */
   const PEOPLE_KEY = 'rcg_people_v2';
   function loadPeople() {
     const saved = localStorage.getItem(PEOPLE_KEY);
-    people = saved ? JSON.parse(saved) : [...window.APP_CONFIG.TEAM];
+    people = saved ? JSON.parse(saved) : [...cfg().TEAM];
     if (!saved) savePeople();
   }
   function savePeople() {
@@ -76,7 +81,7 @@ const App = (() => {
     if (target) target.classList.add('active');
     const tagMap = {
       welcome: 'Inicio', setup: 'Setup', voter: 'Identificación',
-      vote: 'Votación', confirm: 'Confirmar', done: 'Listo'
+      vote: 'Votación', sent: 'Enviado'
     };
     const tag = $('navTag');
     if (tag) tag.textContent = tagMap[name] || name;
@@ -89,11 +94,6 @@ const App = (() => {
     sessionVotes = [];
     go('voter');
     setTimeout(() => $('voterNameInput').focus(), 80);
-  }
-  function resetVoterInput() {
-    $('voterNameInput').value = '';
-    $('voterAlert').style.display = 'none';
-    currentVoter = null;
   }
   function confirmVoter() {
     const name = $('voterNameInput').value.trim();
@@ -108,8 +108,10 @@ const App = (() => {
   /* ---------- vote ---------- */
   function renderNomineeGrid() {
     const alreadyNom = sessionVotes.map(v => v.nominee);
+    // Excluyo al votante de la lista de nominables
+    const voterSlug = currentVoter.toLowerCase().replace(/\s+/g, '.');
     const others = people.filter(p =>
-      p.toLowerCase() !== currentVoter.toLowerCase().replace(/\s+/g, '.')
+      p.toLowerCase() !== voterSlug
     );
     selectedNominee = null;
     $('nomineeGrid').innerHTML = others.map(p => {
@@ -138,38 +140,99 @@ const App = (() => {
     $('voteAlert').style.display = 'none';
   }
   function updateCharCount() {
-    $('charCount').textContent = $('justification').value.length;
+    const v = $('justification').value;
+    const max = cfg().MAIL.MAX_JUSTIFICATION_CHARS;
+    $('charCount').textContent = v.length;
+    $('charMax').textContent = max;
+    // Enforzar límite (algunos browsers no respetan maxlength en paste)
+    if (v.length > max) {
+      $('justification').value = v.slice(0, max);
+      $('charCount').textContent = max;
+    }
+    // Aviso visual cuando estamos cerca del límite
+    const pct = v.length / max;
+    const counter = $('charCount').parentElement;
+    if (counter) {
+      counter.classList.toggle('warn', pct > 0.85 && pct < 1);
+      counter.classList.toggle('danger', pct >= 1);
+    }
   }
-  async function submitVote() {
+
+  /* ---------- SANITIZE ----------
+     Remueve caracteres que rompen el subject:
+     - el separador de campos (lo reemplazamos)
+     - saltos de línea, tabs (Outlook no los pone en subject pero por si acaso)
+  */
+  function sanitizeForSubject(text) {
+    const sep = cfg().MAIL.FIELD_SEP;
+    return String(text)
+      .replace(new RegExp('\\' + sep, 'g'), '/')
+      .replace(/[\r\n\t]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /* ---------- BUILD MAILTO ---------- */
+  function buildMailtoUrl(vote) {
+    const c = cfg();
+    const fields = [
+      c.MAIL.SUBJECT_PREFIX,
+      vote.id,
+      sanitizeForSubject(vote.voter),
+      sanitizeForSubject(vote.nominee),
+      sanitizeForSubject(vote.justification),
+      vote.timestamp
+    ];
+    const subject = fields.join(c.MAIL.FIELD_SEP);
+    const params = new URLSearchParams({
+      subject: subject,
+      body: c.MAIL.BODY
+    });
+    return `mailto:${encodeURIComponent(c.MAIL.ADMIN_EMAIL)}?${params.toString()}`;
+  }
+
+  /* ---------- SUBMIT ---------- */
+  function submitVote() {
     const just = $('justification').value.trim();
     if (!selectedNominee || !just) {
       $('voteAlert').style.display = 'block';
       return;
     }
-    try {
-      const vote = await DataLayer.submitVote({
-        voter: currentVoter,
-        nominee: selectedNominee,
-        justification: just
-      });
-      sessionVotes.push(vote);
-      showConfirmScreen();
-      toast('Nominación registrada');
-    } catch (err) {
-      toast('Error al guardar: ' + err.message);
+    const vote = {
+      id: uid(),
+      voter: currentVoter,
+      nominee: selectedNominee,
+      justification: just,
+      timestamp: new Date().toISOString()
+    };
+    sessionVotes.push(vote);
+
+    if (cfg().STORAGE_MODE === 'mailto') {
+      // Abrir Outlook con el mail prellenado
+      const url = buildMailtoUrl(vote);
+      window.location.href = url;
+      // Damos un instante y mostramos pantalla de confirmación
+      setTimeout(() => showSentScreen(vote), 400);
+    } else {
+      // modo local: guardar en localStorage (legacy)
+      try {
+        const arr = JSON.parse(localStorage.getItem('rcg_votes_v2') || '[]');
+        arr.push(vote);
+        localStorage.setItem('rcg_votes_v2', JSON.stringify(arr));
+      } catch (e) { /* ignore */ }
+      showSentScreen(vote);
     }
   }
 
-  /* ---------- confirm ---------- */
-  function showConfirmScreen() {
-    go('confirm');
-    $('confirmList').innerHTML = sessionVotes.map(v => `
-      <div class="summary-item">
-        <div class="who">${displayName(v.nominee)}</div>
-        <div class="why">${v.justification.length > 140
-          ? v.justification.slice(0, 140) + '…'
-          : v.justification}</div>
-      </div>`).join('');
+  /* ---------- SENT SCREEN ---------- */
+  function showSentScreen(vote) {
+    go('sent');
+    $('sentNomineeName').textContent = displayName(vote.nominee);
+    $('sentSessionCount').textContent = sessionVotes.length;
+    $('sentSessionLabel').textContent =
+      sessionVotes.length === 1
+        ? '1 nominación en esta sesión'
+        : `${sessionVotes.length} nominaciones en esta sesión`;
   }
   function voteAgain() {
     go('vote');
@@ -177,16 +240,17 @@ const App = (() => {
     renderNomineeGrid();
   }
   function finishVoting() {
-    go('done');
-    const count = sessionVotes.length;
-    const names = sessionVotes.map(v => displayName(v.nominee)).join(', ');
-    $('doneSummaryText').textContent = count === 1
-      ? `Nominaste a ${names}. Tu reconocimiento ya quedó registrado.`
-      : `Nominaste a ${count} personas: ${names}. Tu reconocimiento ya quedó registrado.`;
-  }
-  function newVoter() {
     sessionVotes = [];
     go('welcome');
+  }
+
+  /* ---------- RESEND last ----------
+     Por si el browser bloqueó el primer mailto (raro pero pasa).
+  */
+  function resendLast() {
+    if (!sessionVotes.length) return;
+    const last = sessionVotes[sessionVotes.length - 1];
+    window.location.href = buildMailtoUrl(last);
   }
 
   /* ---------- init ---------- */
@@ -194,25 +258,25 @@ const App = (() => {
     loadPeople();
     renderPersonList();
 
-    // Enter en input de persona
     const newPerson = $('newPersonInput');
     if (newPerson) {
       newPerson.addEventListener('keydown', e => {
         if (e.key === 'Enter') addPerson();
       });
     }
-    // Enter en pantalla de voter
     document.addEventListener('keydown', e => {
       if (e.key === 'Enter' && $('screen-voter').classList.contains('active')) {
         confirmVoter();
       }
     });
+    // Inicializar contador
+    updateCharCount();
   }
 
   return {
     init, go, startSurvey, addPerson, removePerson,
     confirmVoter, selectNominee, updateCharCount,
-    submitVote, voteAgain, finishVoting, newVoter
+    submitVote, voteAgain, finishVoting, resendLast
   };
 })();
 

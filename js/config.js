@@ -1,58 +1,77 @@
 /* ============================================================
-   CONFIG — Recognition Points
-   Acá centralizás todo lo configurable. No hace falta tocar
-   los otros archivos para cambiar contraseña, modo de storage
-   o las URLs de Power Automate.
+   CONFIG — Recognition Points (v3 — mail + Power BI)
+   El único archivo que necesitás editar.
    ============================================================ */
 
 window.APP_CONFIG = {
 
   /* ------------------------------------------------------------
-     MODO DE ALMACENAMIENTO
+     MODO DE ALMACENAMIENTO (público)
      ------------------------------------------------------------
-     'local'         -> guarda en el navegador (localStorage)
-                        + permite exportar / importar JSON manual.
-                        Sirve para arrancar HOY sin nada extra.
+     'mailto' -> abre Outlook prellenado con el voto en el subject.
+                 Cada submit = un mail al ADMIN_EMAIL. Power Automate
+                 detecta el mail y agrega la fila al Excel en SharePoint.
+                 Es el modo PRINCIPAL.
 
-     'powerautomate' -> envía cada voto vía POST al flow de
-                        Power Automate, que lo escribe en el
-                        Excel de SharePoint. Y la jefa lee con
-                        un GET a otro flow.
-                        Cambiar a este modo cuando los flows
-                        estén creados y las URLs pegadas abajo.
+     'local'  -> guarda en localStorage (offline). Sirve como fallback
+                 si Outlook no está disponible o si querés probar la UI
+                 sin mandar mails reales.
      ------------------------------------------------------------ */
-  STORAGE_MODE: 'local',
+  STORAGE_MODE: 'mailto',
 
 
   /* ------------------------------------------------------------
-     POWER AUTOMATE — URLs de los flows
-     ------------------------------------------------------------
-     Pegá acá las "HTTP POST URL" que te genera Power Automate
-     cuando creás un flow con trigger
-     "When a HTTP request is received".
+     MAIL — destinatario y formato
      ------------------------------------------------------------ */
-  POWER_AUTOMATE: {
-    // Flow que recibe un voto y lo agrega como fila al Excel
-    SUBMIT_VOTE_URL: 'PEGAR_AQUI_LA_URL_DEL_FLOW_DE_SUBMIT',
+  MAIL: {
+    // A quién llegan todos los votos. Coincide con el inbox que escucha
+    // el flow de Power Automate.
+    ADMIN_EMAIL: 'juan.i.da.torre@accenture.com',
 
-    // Flow que devuelve todos los votos (para el dashboard de la jefa)
-    GET_VOTES_URL:   'PEGAR_AQUI_LA_URL_DEL_FLOW_DE_GET',
+    // Prefijo del subject. Tiene que coincidir con el "Subject Filter"
+    // del trigger en Power Automate.
+    SUBJECT_PREFIX: 'RP-FY26-VOTE',
 
-    // Token compartido — opcional pero recomendado.
-    // Lo agregamos como header. En el flow validás que coincida.
-    SHARED_TOKEN: 'cambiar-este-token-por-uno-largo-aleatorio'
+    // Separador de campos dentro del subject.
+    // Si lo cambiás acá, también cambialo en las expresiones split() del flow.
+    FIELD_SEP: '|',
+
+    // Cuerpo del mail (lo que ve el usuario). Solo informativo,
+    // el flow no lo lee.
+    BODY: 'Esta nominacion fue generada automaticamente por la pagina Recognition Points. No respondas este mail.\n\nGracias por participar.',
+
+    // Límite de caracteres para la justificación.
+    // Subjects de Outlook permiten ~255 chars. Reservamos espacio
+    // para los otros campos (id, voter, nominee, timestamp, separadores).
+    MAX_JUSTIFICATION_CHARS: 200
   },
 
 
   /* ------------------------------------------------------------
-     CREDENCIALES DE ADMIN (la jefa)
+     POWER BI — link público al dashboard
      ------------------------------------------------------------
-     Como acordamos, va contraseña en código. NO es seguro
-     contra alguien que abra el HTML, pero filtra al 99% de
-     curiosos casuales. Cambiala por algo que no sea obvio.
+     Pegá acá el link del reporte de Power BI publicado.
+     La jefa hace click en el botón "Abrir dashboard" y se abre
+     en una pestaña nueva.
 
-     Si después querés algo más fuerte, podemos pasar a un
-     hash SHA-256 (te puedo armar el cambio en 2 minutos).
+     Lo conseguís en Power BI Service:
+     - Abrí el reporte publicado
+     - File → Embed report → Website or portal
+     - Copiás el "Link you can send in email"
+     - O simplemente la URL del reporte si la jefa va a abrirlo
+       desde su propia cuenta (recomendado para compliance).
+     ------------------------------------------------------------ */
+  POWER_BI: {
+    DASHBOARD_URL: 'PEGAR_AQUI_LA_URL_DEL_DASHBOARD_PBI'
+  },
+
+
+  /* ------------------------------------------------------------
+     CREDENCIALES DE ADMIN
+     ------------------------------------------------------------
+     Contraseña en código. Cambiala antes de publicar.
+     Esto es solo una traba para curiosos casuales —
+     no hay seguridad real porque el repo es público.
      ------------------------------------------------------------ */
   ADMIN: {
     USERNAME: 'admin',
@@ -74,9 +93,7 @@ window.APP_CONFIG = {
   ],
 
 
-  /* ------------------------------------------------------------
-     STOPWORDS — palabras a ignorar en la nube de palabras
-     ------------------------------------------------------------ */
+  /* Stopwords para el word cloud (modo local solamente) */
   STOPWORDS: new Set([
     'a','al','algo','algun','alguna','algunas','alguno','algunos','ante','antes',
     'aqui','asi','ayuda','bien','cada','como','con','contra','cual','cuando',
