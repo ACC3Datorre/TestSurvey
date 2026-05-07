@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recognition Points · FY26</title>
+<meta name="description" content="Recognition Points FY26 — FinOps · CFO&EV. Reconocé a quienes hicieron una diferencia este año.">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="paper">
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <a href="#" class="brand" onclick="App.go('welcome');return false;">
+    <span class="chev">&gt;</span>
+    Recognition Points
+  </a>
+  <div class="topbar-meta">
+    <span><span class="dot"></span> FY26 · FinOps</span>
+    <span id="navTag">Inicio</span>
+  </div>
+</header>
+
+<!-- ============== WELCOME ============== -->
+<section class="screen active" id="screen-welcome">
+  <div class="hero">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">Encuesta anual · CFO&amp;EV</span>
+        <h1 style="margin-top:18px">
+          Reconocer<br>
+          es <em>elegir</em><br>
+          recordar.
+        </h1>
+      </div>
+      <div class="hero-side">
+        <span class="eyebrow">Por qué este espacio</span>
+        <p>Este formulario es para nominar a quienes, más allá de sus responsabilidades, marcaron una diferencia en FinOps durante el año.</p>
+        <p>Una iniciativa, un esfuerzo extra, una solución que nadie más vio. El reconocimiento del equipo importa, y este es el lugar para hacerlo explícito.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap" style="padding-top: 24px">
+    <div class="action-grid">
+      <button class="action-card" onclick="App.startSurvey()">
+        <span class="num">— 01</span>
+        <h3>Iniciar la<br>nominación</h3>
+        <p>Identificate, elegí a tus compañeros y describí por qué su contribución merece reconocimiento. Lleva pocos minutos.</p>
+        <span class="arrow">Comenzar →</span>
+      </button>
+      <button class="action-card" onclick="window.location.href='admin.html'">
+        <span class="num">— 02</span>
+        <h3>Acceso para el<br>responsable</h3>
+        <p>Panel privado con resultados, distribución de votos, palabras más frecuentes y exportación. Requiere contraseña.</p>
+        <span class="arrow">Ingresar →</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ============== SETUP ============== -->
+<section class="screen" id="screen-setup">
+  <div class="hero" style="padding: 64px 40px 32px">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">Administrador</span>
+        <h1 style="font-size: clamp(40px, 6vw, 80px); margin-top: 18px">
+          Configurar<br>el <em>equipo</em>
+        </h1>
+      </div>
+      <div class="hero-side">
+        <span class="eyebrow">Lista del equipo</span>
+        <p>Agregá o quitá personas. Estos nombres aparecerán como votantes y también como candidatos a nominación.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap-narrow">
+    <div class="section-rule">
+      <span class="label">— Equipo</span>
+      <span class="line"></span>
+    </div>
+
+    <div class="field">
+      <label for="newPersonInput">Agregar integrante</label>
+      <div style="display:flex; gap: 12px; align-items: flex-end;">
+        <input type="text" id="newPersonInput" placeholder="ej: nicolas.dorni" autocomplete="off" />
+        <button class="btn btn-ghost btn-sm" onclick="App.addPerson()">+ Agregar</button>
+      </div>
+    </div>
+
+    <div class="tag-list" id="personList"></div>
+    <p class="helper" id="previewMsg" style="margin-top: 14px"></p>
+
+    <div style="display:flex; justify-content:space-between; gap: 12px; margin-top: 48px; flex-wrap: wrap;">
+      <button class="btn btn-ghost" onclick="App.go('welcome')">← Volver</button>
+      <button class="btn btn-acn" onclick="App.startSurvey()">Iniciar encuesta →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============== VOTER NAME ============== -->
+<section class="screen" id="screen-voter">
+  <div class="hero" style="padding: 80px 40px 56px">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">— Paso 01</span>
+        <h1 style="margin-top:18px">¿Quién <em>sos</em>?</h1>
+      </div>
+      <div class="hero-side">
+        <p>Necesitamos tu nombre para que la persona responsable pueda saber quién nominó a cada uno. Tu nombre va a quedar registrado junto a tus nominaciones.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap-narrow">
+    <div class="field">
+      <label for="voterNameInput">Tu nombre</label>
+      <input type="text" id="voterNameInput" placeholder="Ej: Sol Faga" autocomplete="off" />
+    </div>
+    <div class="alert warn" id="voterAlert" style="display:none">⚠ Por favor escribí tu nombre antes de continuar.</div>
+    <div style="display:flex; justify-content:space-between; gap: 12px; margin-top: 24px; flex-wrap: wrap;">
+      <button class="btn btn-ghost" onclick="App.go('welcome')">← Cancelar</button>
+      <button class="btn btn-primary" onclick="App.confirmVoter()">Continuar →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============== VOTE ============== -->
+<section class="screen" id="screen-vote">
+  <div class="hero" style="padding: 64px 40px 40px">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">— Paso 02</span>
+        <h1 style="margin-top:18px">Nominá<br>a alguien.</h1>
+      </div>
+      <div class="hero-side">
+        <p>Elegí una persona y contá qué hizo este año que merezca reconocimiento. Podés nominar a tantas como quieras, una por vez.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="voter-bar">
+      <div class="voter-tag">
+        <span class="label">Votando como</span>
+        <span class="name" id="currentVoterName">—</span>
+      </div>
+      <div class="session-count">
+        Esta sesión: <strong id="sessionVoteCount" class="tabular">0</strong> nominación(es)
+      </div>
+    </div>
+
+    <div class="section-rule">
+      <span class="label">— Elegí a la persona</span>
+      <span class="line"></span>
+    </div>
+    <p class="helper" style="margin: -12px 0 18px">
+      Las personas que ya nominaste en esta sesión aparecen deshabilitadas.
+    </p>
+    <div class="nominee-grid" id="nomineeGrid"></div>
+
+    <div class="section-rule" style="margin-top: 40px">
+      <span class="label">— Justificación</span>
+      <span class="line"></span>
+    </div>
+    <div class="field">
+      <label for="justification">¿Por qué merece este reconocimiento?</label>
+      <textarea id="justification" placeholder="Una contribución específica, un hecho concreto, un momento del año..." maxlength="500" oninput="App.updateCharCount()"></textarea>
+      <div class="helper right"><span id="charCount" class="tabular">0</span> / 500</div>
+    </div>
+
+    <div class="alert warn" id="voteAlert" style="display:none">⚠ Seleccioná una persona y escribí la justificación.</div>
+
+    <div style="display:flex; justify-content:space-between; gap: 12px; margin-top: 24px; flex-wrap: wrap;">
+      <button class="btn btn-ghost" onclick="App.go('welcome')">← Salir</button>
+      <button class="btn btn-acn" onclick="App.submitVote()">Enviar nominación ✓</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============== CONFIRM ============== -->
+<section class="screen" id="screen-confirm">
+  <div class="wrap-narrow">
+    <span class="eyebrow">— Nominación registrada</span>
+    <div class="confirm-card">
+      <h2>¿Querés proponer<br>a alguien <em>más</em>?</h2>
+      <p class="lede">Podés nominar a tantas personas como quieras. Cada nominación necesita su propia justificación.</p>
+
+      <span class="eyebrow" style="display:block; margin-bottom: 12px">— Tu sesión hasta acá</span>
+      <div class="summary-list" id="confirmList"></div>
+
+      <div style="display:flex; gap: 12px; margin-top: 32px; flex-wrap: wrap;">
+        <button class="btn btn-acn" onclick="App.voteAgain()">+ Nominar a otra persona</button>
+        <button class="btn btn-ghost" onclick="App.finishVoting()">Ya terminé</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== DONE ============== -->
+<section class="screen" id="screen-done">
+  <div class="wrap-narrow">
+    <span class="eyebrow">— Listo</span>
+    <div class="done-card">
+      <h2>Gracias por<br>tu <em>tiempo</em>.</h2>
+      <p class="lede" id="doneSummaryText">—</p>
+      <div style="display:flex; gap: 12px; flex-wrap: wrap;">
+        <button class="btn btn-primary" onclick="App.newVoter()">Volver al inicio</button>
+        <button class="btn btn-ghost" onclick="DataLayer.exportJSON()">Descargar mis votos (JSON)</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span class="dot"></span><span id="toastMsg"></span></div>
+
+<!-- FOOTER -->
+<footer>
+  <div>FinOps · CFO&amp;EV · Recognition Points FY26</div>
+  <div>Hecho con cuidado por el equipo</div>
+</footer>
+
+<!-- SCRIPTS -->
+<script src="js/config.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
