@@ -1197,3 +1197,127 @@ body.dark footer {
 .action-grid-single { grid-template-columns: 1fr; }
 .action-grid-single .action-card { min-height: 240px; }
 .action-grid-single .action-card h3 { font-size: 36px; }
+
+/* ---------- BUSCADOR + FILTROS (v5) ---------- */
+.search-bar {
+  margin-bottom: 14px;
+}
+.search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  transition: border-color .15s;
+}
+.search-input-wrap:focus-within {
+  border-color: var(--acn-purple);
+  box-shadow: 0 0 0 3px rgba(161, 0, 255, 0.08);
+}
+.search-icon {
+  padding: 0 14px;
+  font-size: 18px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.search-input-wrap input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 12px 14px 12px 0;
+  font-size: 15px;
+  font-family: var(--body);
+  color: var(--ink);
+  outline: none;
+}
+.search-input-wrap input::placeholder {
+  color: var(--muted-2);
+}
+.search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px; height: 28px;
+  margin-right: 8px;
+  border-radius: 50%;
+  font-size: 16px;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background .15s;
+}
+.search-clear:hover {
+  background: var(--paper-2);
+  color: var(--ink);
+}
+
+.filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.filter-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-right: 6px;
+  min-width: 50px;
+}
+.filter-chip {
+  padding: 6px 12px;
+  font-family: var(--body);
+  font-size: 12px;
+  font-weight: 500;
+  background: transparent;
+  color: var(--ink-2);
+  border: 1px solid var(--line-2);
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.filter-chip:hover {
+  border-color: var(--ink);
+}
+.filter-chip.active {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+/* ---------- AJUSTES DE NOMINEE-CARD (v5) ---------- */
+.nominee-grid {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+.nominee-card .name {
+  font-size: 13px;
+  line-height: 1.3;
+  min-height: 34px;
+}
+.nominee-card .role {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+.nominee-card .nominee-id {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted-2);
+  letter-spacing: 0;
+  word-break: break-all;
+  line-height: 1.3;
+}
+.nominee-card.selected .nominee-id {
+  color: var(--muted-2);
+  opacity: 0.7;
+}
