@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Recognition Points · FY26</title>
-<meta name="description" content="Recognition Points FY26 — FinOps · CFO&EV. Reconocé a quienes hicieron una diferencia este año.">
+<meta name="description" content="Recognition Points FY26 — CFO&EV. Reconocé a quienes hicieron una diferencia este año.">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +20,7 @@
     Recognition Points
   </a>
   <div class="topbar-meta">
-    <span><span class="dot"></span> FY26 · FinOps</span>
+    <span><span class="dot"></span> FY26 · CFO&amp;EV</span>
     <span id="navTag">Inicio</span>
   </div>
 </header>
@@ -39,7 +39,7 @@
       </div>
       <div class="hero-side">
         <span class="eyebrow">Por qué este espacio</span>
-        <p>Este formulario es para nominar a quienes, más allá de sus responsabilidades, marcaron una diferencia en FinOps durante el año.</p>
+        <p>Este formulario es para nominar a quienes, más allá de sus responsabilidades, marcaron una diferencia durante el año.</p>
         <p>Una iniciativa, un esfuerzo extra, una solución que nadie más vio. El reconocimiento del equipo importa, y este es el lugar para hacerlo explícito.</p>
       </div>
     </div>
@@ -59,51 +59,10 @@
       <span class="eyebrow">— Cómo funciona</span>
       <ol class="steps">
         <li><strong>Completás</strong> tu nombre y elegís a quién querés nominar.</li>
-        <li><strong>Escribís</strong> una justificación breve (hasta 200 caracteres).</li>
+        <li><strong>Escribís</strong> una justificación específica (hasta 200 caracteres).</li>
         <li><strong>Se abre Outlook</strong> con un mail ya armado dirigido al equipo organizador.</li>
         <li><strong>Apretás "Enviar"</strong> en Outlook. Tu nominación queda registrada automáticamente.</li>
       </ol>
-    </div>
-  </div>
-</section>
-
-<!-- ============== SETUP ============== -->
-<section class="screen" id="screen-setup">
-  <div class="hero" style="padding: 64px 40px 32px">
-    <div class="hero-grid">
-      <div>
-        <span class="eyebrow">Administrador</span>
-        <h1 style="font-size: clamp(40px, 6vw, 80px); margin-top: 18px">
-          Configurar<br>el <em>equipo</em>
-        </h1>
-      </div>
-      <div class="hero-side">
-        <span class="eyebrow">Lista del equipo</span>
-        <p>Agregá o quitá personas. Estos nombres aparecerán como votantes y también como candidatos a nominación.</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="wrap-narrow">
-    <div class="section-rule">
-      <span class="label">— Equipo</span>
-      <span class="line"></span>
-    </div>
-
-    <div class="field">
-      <label for="newPersonInput">Agregar integrante</label>
-      <div style="display:flex; gap: 12px; align-items: flex-end;">
-        <input type="text" id="newPersonInput" placeholder="ej: nicolas.dorni" autocomplete="off" />
-        <button class="btn btn-ghost btn-sm" onclick="App.addPerson()">+ Agregar</button>
-      </div>
-    </div>
-
-    <div class="tag-list" id="personList"></div>
-    <p class="helper" id="previewMsg" style="margin-top: 14px"></p>
-
-    <div style="display:flex; justify-content:space-between; gap: 12px; margin-top: 48px; flex-wrap: wrap;">
-      <button class="btn btn-ghost" onclick="App.go('welcome')">← Volver</button>
-      <button class="btn btn-acn" onclick="App.startSurvey()">Iniciar encuesta →</button>
     </div>
   </div>
 </section>
@@ -164,18 +123,60 @@
       <span class="label">— Elegí a la persona</span>
       <span class="line"></span>
     </div>
-    <p class="helper" style="margin: -12px 0 18px">
-      Las personas que ya nominaste en esta sesión aparecen deshabilitadas.
-    </p>
+
+    <!-- BUSCADOR + FILTROS -->
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="searchInput" placeholder="Buscar por nombre o ID..." autocomplete="off" oninput="App.applyFilters()" />
+        <button class="search-clear" id="searchClear" onclick="App.clearSearch()" style="display:none">×</button>
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <div class="filter-group">
+        <span class="filter-label">Track:</span>
+        <button class="filter-chip active" data-filter="track" data-value="all" onclick="App.setFilter(this)">Todos</button>
+        <button class="filter-chip" data-filter="track" data-value="FinOps" onclick="App.setFilter(this)">FinOps</button>
+        <button class="filter-chip" data-filter="track" data-value="EPM" onclick="App.setFilter(this)">EPM</button>
+        <button class="filter-chip" data-filter="track" data-value="Platforms" onclick="App.setFilter(this)">Platforms</button>
+        <button class="filter-chip" data-filter="track" data-value="DRC" onclick="App.setFilter(this)">DRC</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Nivel:</span>
+        <button class="filter-chip active" data-filter="level" data-value="all" onclick="App.setFilter(this)">Todos</button>
+        <button class="filter-chip" data-filter="level" data-value="Director" onclick="App.setFilter(this)">Director</button>
+        <button class="filter-chip" data-filter="level" data-value="Senior Manager" onclick="App.setFilter(this)">Sr Manager</button>
+        <button class="filter-chip" data-filter="level" data-value="Manager" onclick="App.setFilter(this)">Manager</button>
+        <button class="filter-chip" data-filter="level" data-value="Consultant" onclick="App.setFilter(this)">Consultant</button>
+        <button class="filter-chip" data-filter="level" data-value="Senior Analyst" onclick="App.setFilter(this)">Sr Analyst</button>
+        <button class="filter-chip" data-filter="level" data-value="Analyst" onclick="App.setFilter(this)">Analyst</button>
+        <button class="filter-chip" data-filter="level" data-value="Associate" onclick="App.setFilter(this)">Associate</button>
+      </div>
+    </div>
+
+    <p class="helper" id="resultCount" style="margin: 4px 0 14px"></p>
+
     <div class="nominee-grid" id="nomineeGrid"></div>
+    <p class="helper" id="emptyResults" style="display:none; text-align:center; padding: 32px 0;">
+      No se encontraron personas con esos filtros.
+    </p>
 
     <div class="section-rule" style="margin-top: 40px">
       <span class="label">— Justificación</span>
       <span class="line"></span>
     </div>
+
+    <div class="info-card-sm" style="margin-bottom: 18px; margin-top: 0;">
+      <p>
+        <strong>Sé específico.</strong> Contá una situación concreta: qué hizo, en qué momento, qué impacto tuvo.
+        Frases genéricas como <em>"es un crack"</em> o <em>"siempre ayuda"</em> no diferencian a la persona del resto del equipo y le quitan valor al reconocimiento.
+      </p>
+    </div>
+
     <div class="field">
       <label for="justification">¿Por qué merece este reconocimiento?</label>
-      <textarea id="justification" placeholder="Una contribución específica, un hecho concreto, un momento del año..." maxlength="200" oninput="App.updateCharCount()"></textarea>
+      <textarea id="justification" placeholder="Ej: 'Lideró la migración de XYZ en Q3 cuando el equipo estaba bajo presión. Su iniciativa nos ahorró 2 semanas de trabajo manual.'" maxlength="200" oninput="App.updateCharCount()"></textarea>
       <div class="helper right counter">
         <span id="charCount" class="tabular">0</span> / <span id="charMax" class="tabular">200</span>
       </div>
@@ -227,13 +228,11 @@
 <!-- TOAST -->
 <div class="toast" id="toast"><span class="dot"></span><span id="toastMsg"></span></div>
 
-<!-- FOOTER -->
 <footer>
-  <div>FinOps · CFO&amp;EV · Recognition Points FY26</div>
+  <div>CFO&amp;EV · Recognition Points FY26</div>
   <div>Hecho con cuidado por el equipo</div>
 </footer>
 
-<!-- SCRIPTS -->
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 </body>
