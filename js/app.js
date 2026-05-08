@@ -1,27 +1,31 @@
 /* ============================================================
-   APP — Recognition Points (v3 — mailto flow)
-   El submit arma un subject formato:
-     RP-FY26-VOTE|<id>|<voter>|<nominee>|<justification>|<timestamp>
-   y abre Outlook con mailto:.
+   APP — Recognition Points (v5 — equipo completo + filtros)
+   - Equipo como array de objetos {id, name, level, track}
+   - Buscador por nombre o id
+   - Filtros por track y level
    ============================================================ */
 
 const App = (() => {
 
-  let people = [];
+  let team = [];          // copia de APP_CONFIG.TEAM
   let currentVoter = null;
-  let selectedNominee = null;
+  let selectedNomineeId = null;
   let sessionVotes = [];
+
+  // Estado de filtros
+  let filters = {
+    track: 'all',
+    level: 'all',
+    search: ''
+  };
 
   /* ---------- helpers ---------- */
   const $ = (id) => document.getElementById(id);
   const cfg = () => window.APP_CONFIG;
 
   function initials(name) {
-    return name.replace(/\./g, ' ').trim().split(/\s+/)
+    return name.trim().split(/\s+/)
       .map(w => w[0]).join('').toUpperCase().slice(0, 2);
-  }
-  function displayName(name) {
-    return name.replace(/\./g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
   function toast(msg) {
     $('toastMsg').textContent = msg;
@@ -32,46 +36,9 @@ const App = (() => {
   function uid() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
-
-  /* ---------- people (lista del equipo) ---------- */
-  const PEOPLE_KEY = 'rcg_people_v2';
-  function loadPeople() {
-    const saved = localStorage.getItem(PEOPLE_KEY);
-    people = saved ? JSON.parse(saved) : [...cfg().TEAM];
-    if (!saved) savePeople();
-  }
-  function savePeople() {
-    localStorage.setItem(PEOPLE_KEY, JSON.stringify(people));
-  }
-  function addPerson() {
-    const inp = $('newPersonInput');
-    const name = inp.value.trim().toLowerCase().replace(/\s+/g, '.');
-    if (!name) return;
-    if (!people.includes(name)) {
-      people.push(name);
-      savePeople();
-      renderPersonList();
-    }
-    inp.value = '';
-    inp.focus();
-  }
-  function removePerson(name) {
-    people = people.filter(p => p !== name);
-    savePeople();
-    renderPersonList();
-  }
-  function renderPersonList() {
-    const list = $('personList');
-    if (!list) return;
-    list.innerHTML = people.map(p => `
-      <span class="tag">
-        ${displayName(p)}
-        <span class="x" onclick="App.removePerson('${p.replace(/'/g,"\\'")}')">×</span>
-      </span>`).join('');
-    const msg = $('previewMsg');
-    if (msg) msg.textContent = people.length
-      ? `${people.length} integrante(s) en la lista.`
-      : 'No hay integrantes cargados.';
+  function normalize(s) {
+    return String(s || '').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // sin tildes
   }
 
   /* ---------- screens ---------- */
@@ -80,7 +47,7 @@ const App = (() => {
     const target = $('screen-' + name);
     if (target) target.classList.add('active');
     const tagMap = {
-      welcome: 'Inicio', setup: 'Setup', voter: 'Identificación',
+      welcome: 'Inicio', voter: 'Identificación',
       vote: 'Votación', sent: 'Enviado'
     };
     const tag = $('navTag');
@@ -90,7 +57,6 @@ const App = (() => {
 
   /* ---------- voter ---------- */
   function startSurvey() {
-    if (people.length < 2) { alert('Cargá al menos 2 integrantes.'); return; }
     sessionVotes = [];
     go('voter');
     setTimeout(() => $('voterNameInput').focus(), 80);
@@ -102,54 +68,124 @@ const App = (() => {
     sessionVotes = [];
     go('vote');
     $('currentVoterName').textContent = currentVoter;
+    resetFilters();
     renderNomineeGrid();
   }
 
-  /* ---------- vote ---------- */
+  /* ---------- filtros ---------- */
+  function setFilter(btn) {
+    const filter = btn.dataset.filter;   // 'track' | 'level'
+    const value = btn.dataset.value;     // 'all' | 'FinOps' | etc.
+    filters[filter] = value;
+    // marcar visual
+    document.querySelectorAll(`.filter-chip[data-filter="${filter}"]`)
+      .forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    applyFilters();
+  }
+
+  function clearSearch() {
+    $('searchInput').value = '';
+    filters.search = '';
+    $('searchClear').style.display = 'none';
+    applyFilters();
+  }
+
+  function resetFilters() {
+    filters = { track: 'all', level: 'all', search: '' };
+    $('searchInput').value = '';
+    $('searchClear').style.display = 'none';
+    document.querySelectorAll('.filter-chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.value === 'all');
+    });
+  }
+
+  function applyFilters() {
+    filters.search = $('searchInput').value.trim();
+    $('searchClear').style.display = filters.search ? 'flex' : 'none';
+    renderNomineeGrid();
+  }
+
+  /* ---------- vote / nominees ---------- */
+  function getFilteredTeam() {
+    const voterSlug = currentVoter
+      ? normalize(currentVoter).replace(/\s+/g, '.')
+      : '';
+    const search = normalize(filters.search);
+
+    return team.filter(p => {
+      // No mostrar al votante (best effort, tomando su nombre escrito)
+      if (p.id === voterSlug) return false;
+
+      if (filters.track !== 'all' && p.track !== filters.track) return false;
+      if (filters.level !== 'all' && p.level !== filters.level) return false;
+
+      if (search) {
+        const haystack = normalize(p.name + ' ' + p.id);
+        if (!haystack.includes(search)) return false;
+      }
+      return true;
+    });
+  }
+
   function renderNomineeGrid() {
-    const alreadyNom = sessionVotes.map(v => v.nominee);
-    // Excluyo al votante de la lista de nominables
-    const voterSlug = currentVoter.toLowerCase().replace(/\s+/g, '.');
-    const others = people.filter(p =>
-      p.toLowerCase() !== voterSlug
-    );
-    selectedNominee = null;
-    $('nomineeGrid').innerHTML = others.map(p => {
-      const voted = alreadyNom.includes(p);
-      const safeId = p.replace(/'/g, "\\'");
-      return `
-        <div class="nominee-card ${voted ? 'disabled' : ''}"
-             ${voted ? '' : `onclick="App.selectNominee('${safeId}', this)"`}>
-          <span class="initials">${initials(p)}</span>
-          <div class="name">${displayName(p)}</div>
-          <div class="role">FinOps</div>
-          ${voted
-            ? '<div class="check">✓ Ya nominado</div>'
-            : '<div class="check">✓</div>'}
-        </div>`;
-    }).join('');
+    const filtered = getFilteredTeam();
+    const alreadyNomIds = new Set(sessionVotes.map(v => v.nomineeId));
+    selectedNomineeId = null;
+
+    const grid = $('nomineeGrid');
+    const empty = $('emptyResults');
+    const counter = $('resultCount');
+
+    if (!filtered.length) {
+      grid.innerHTML = '';
+      empty.style.display = 'block';
+      counter.textContent = '';
+    } else {
+      empty.style.display = 'none';
+      counter.textContent = `${filtered.length} persona${filtered.length === 1 ? '' : 's'}`;
+
+      grid.innerHTML = filtered.map(p => {
+        const voted = alreadyNomIds.has(p.id);
+        const safeId = p.id.replace(/'/g, "\\'");
+        return `
+          <div class="nominee-card ${voted ? 'disabled' : ''}"
+               ${voted ? '' : `onclick="App.selectNominee('${safeId}', this)"`}>
+            <span class="initials">${initials(p.name)}</span>
+            <div class="name">${p.name}</div>
+            <div class="role">${p.level} · ${p.track}</div>
+            <div class="nominee-id">${p.id}</div>
+            ${voted
+              ? '<div class="check">✓ Ya nominado</div>'
+              : '<div class="check">✓</div>'}
+          </div>`;
+      }).join('');
+    }
+
     $('justification').value = '';
     updateCharCount();
     $('sessionVoteCount').textContent = sessionVotes.length;
   }
-  function selectNominee(name, el) {
+
+  function selectNominee(id, el) {
     document.querySelectorAll('#nomineeGrid .nominee-card:not(.disabled)')
       .forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
-    selectedNominee = name;
+    selectedNomineeId = id;
     $('voteAlert').style.display = 'none';
+    // scroll suave al textarea
+    $('justification').focus({ preventScroll: true });
   }
+
   function updateCharCount() {
     const v = $('justification').value;
     const max = cfg().MAIL.MAX_JUSTIFICATION_CHARS;
     $('charCount').textContent = v.length;
     $('charMax').textContent = max;
-    // Enforzar límite (algunos browsers no respetan maxlength en paste)
     if (v.length > max) {
       $('justification').value = v.slice(0, max);
       $('charCount').textContent = max;
     }
-    // Aviso visual cuando estamos cerca del límite
     const pct = v.length / max;
     const counter = $('charCount').parentElement;
     if (counter) {
@@ -158,11 +194,7 @@ const App = (() => {
     }
   }
 
-  /* ---------- SANITIZE ----------
-     Remueve caracteres que rompen el subject:
-     - el separador de campos (lo reemplazamos)
-     - saltos de línea, tabs (Outlook no los pone en subject pero por si acaso)
-  */
+  /* ---------- SANITIZE ---------- */
   function sanitizeForSubject(text) {
     const sep = cfg().MAIL.FIELD_SEP;
     return String(text)
@@ -179,44 +211,42 @@ const App = (() => {
       c.MAIL.SUBJECT_PREFIX,
       vote.id,
       sanitizeForSubject(vote.voter),
-      sanitizeForSubject(vote.nominee),
+      sanitizeForSubject(vote.nomineeId),
       sanitizeForSubject(vote.justification),
       vote.timestamp
     ];
     const subject = fields.join(c.MAIL.FIELD_SEP);
-    // Construimos los params manualmente para evitar que URLSearchParams
-    // codifique espacios como '+' (algunos clientes no lo decodifican).
-    // Usamos encodeURIComponent que codifica espacios como %20.
-    const url = 'mailto:' + encodeURIComponent(c.MAIL.ADMIN_EMAIL) +
+    return 'mailto:' + encodeURIComponent(c.MAIL.ADMIN_EMAIL) +
       '?subject=' + encodeURIComponent(subject) +
       '&body=' + encodeURIComponent(c.MAIL.BODY);
-    return url;
   }
 
   /* ---------- SUBMIT ---------- */
   function submitVote() {
     const just = $('justification').value.trim();
-    if (!selectedNominee || !just) {
+    if (!selectedNomineeId || !just) {
       $('voteAlert').style.display = 'block';
+      return;
+    }
+    const nominee = team.find(p => p.id === selectedNomineeId);
+    if (!nominee) {
+      toast('Error: persona no encontrada.');
       return;
     }
     const vote = {
       id: uid(),
       voter: currentVoter,
-      nominee: selectedNominee,
+      nomineeId: nominee.id,
+      nomineeName: nominee.name,
       justification: just,
       timestamp: new Date().toISOString()
     };
     sessionVotes.push(vote);
 
     if (cfg().STORAGE_MODE === 'mailto') {
-      // Abrir Outlook con el mail prellenado
-      const url = buildMailtoUrl(vote);
-      window.location.href = url;
-      // Damos un instante y mostramos pantalla de confirmación
+      window.location.href = buildMailtoUrl(vote);
       setTimeout(() => showSentScreen(vote), 400);
     } else {
-      // modo local: guardar en localStorage (legacy)
       try {
         const arr = JSON.parse(localStorage.getItem('rcg_votes_v2') || '[]');
         arr.push(vote);
@@ -226,11 +256,9 @@ const App = (() => {
     }
   }
 
-  /* ---------- SENT SCREEN ---------- */
   function showSentScreen(vote) {
     go('sent');
-    $('sentNomineeName').textContent = displayName(vote.nominee);
-    $('sentSessionCount').textContent = sessionVotes.length;
+    $('sentNomineeName').textContent = vote.nomineeName;
     $('sentSessionLabel').textContent =
       sessionVotes.length === 1
         ? '1 nominación en esta sesión'
@@ -239,16 +267,13 @@ const App = (() => {
   function voteAgain() {
     go('vote');
     $('currentVoterName').textContent = currentVoter;
+    resetFilters();
     renderNomineeGrid();
   }
   function finishVoting() {
     sessionVotes = [];
     go('welcome');
   }
-
-  /* ---------- RESEND last ----------
-     Por si el browser bloqueó el primer mailto (raro pero pasa).
-  */
   function resendLast() {
     if (!sessionVotes.length) return;
     const last = sessionVotes[sessionVotes.length - 1];
@@ -257,28 +282,21 @@ const App = (() => {
 
   /* ---------- init ---------- */
   function init() {
-    loadPeople();
-    renderPersonList();
+    team = [...cfg().TEAM];
 
-    const newPerson = $('newPersonInput');
-    if (newPerson) {
-      newPerson.addEventListener('keydown', e => {
-        if (e.key === 'Enter') addPerson();
-      });
-    }
     document.addEventListener('keydown', e => {
       if (e.key === 'Enter' && $('screen-voter').classList.contains('active')) {
         confirmVoter();
       }
     });
-    // Inicializar contador
     updateCharCount();
   }
 
   return {
-    init, go, startSurvey, addPerson, removePerson,
+    init, go, startSurvey,
     confirmVoter, selectNominee, updateCharCount,
-    submitVote, voteAgain, finishVoting, resendLast
+    submitVote, voteAgain, finishVoting, resendLast,
+    setFilter, applyFilters, clearSearch
   };
 })();
 

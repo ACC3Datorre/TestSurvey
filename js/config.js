@@ -1,66 +1,157 @@
 /* ============================================================
-   CONFIG — Recognition Points (v4 — solo página pública)
+   CONFIG — Recognition Points (v5 — equipo completo 107 personas)
    El único archivo que necesitás editar.
-
-   Flujo:
-   1. Votante usa la página → mailto abre Outlook con el voto.
-   2. Power Automate detecta el mail → escribe en Excel SharePoint.
-   3. Power BI lee el Excel y muestra el dashboard a los responsables.
-      (Los responsables abren Power BI directamente desde su cuenta.)
    ============================================================ */
 
 window.APP_CONFIG = {
 
-  /* ------------------------------------------------------------
-     MODO DE ALMACENAMIENTO
-     ------------------------------------------------------------
-     'mailto' -> abre Outlook prellenado con el voto en el subject.
-                 Cada submit = un mail al ADMIN_EMAIL.
-                 Es el modo PRINCIPAL.
-
-     'local'  -> guarda en localStorage (offline). Útil para testear
-                 la UI sin mandar mails reales.
-     ------------------------------------------------------------ */
   STORAGE_MODE: 'mailto',
 
-
-  /* ------------------------------------------------------------
-     MAIL — destinatario y formato
-     ------------------------------------------------------------ */
   MAIL: {
-    // A quién llegan todos los votos. Tiene que ser la inbox que
-    // escucha el flow de Power Automate.
     ADMIN_EMAIL: 'juan.i.da.torre@accenture.com',
-
-    // Prefijo del subject. Tiene que coincidir con el "Subject Filter"
-    // del trigger en Power Automate.
     SUBJECT_PREFIX: 'RP-FY26-VOTE',
-
-    // Separador de campos dentro del subject.
-    // Si lo cambiás acá, también cambialo en las expresiones split() del flow.
     FIELD_SEP: '|',
-
-    // Cuerpo del mail (lo que ve el usuario antes de mandar).
-    // Solo informativo, el flow no lo lee.
     BODY: 'Esta nominacion fue generada automaticamente por la pagina Recognition Points. No respondas este mail.\n\nGracias por participar.',
-
-    // Límite de caracteres para la justificación.
-    // Subjects de Outlook permiten ~255 chars. Reservamos espacio
-    // para los otros campos (id, voter, nominee, timestamp, separadores).
     MAX_JUSTIFICATION_CHARS: 200
   },
 
-
   /* ------------------------------------------------------------
-     LISTA DEL EQUIPO (FinOps)
+     EQUIPO COMPLETO — 107 miembros
+     Cada entrada: { id, name, level, track }
      ------------------------------------------------------------ */
   TEAM: [
-    'alejandra.cristofano','antonella.s.costanzo','barby.levy','bernadette.v.estrin',
-    'dafne.riera','eliana.a.esquer','f.m.martinez.thoss','fernanda.reca',
-    'flavia.voloschin','francisco.podesta','g.truszkowski','i.sallaz.joannas',
-    'jonathan.blejman','juan.i.da.torre','luca.besio','lucia.minones',
-    'lucila.sanchez','mauro.vera','maximiliano.banegas','natalin.carballo',
-    'patricia.b.volpini','ramiro.lopez','santiago.longo','sofia.lazzarin',
-    'sol.faga','tobias.whelan'
+    { id: 'micaela.v.alvarez', name: 'Micaela Valeria Álvarez M.', level: 'Director', track: 'FinOps' },
+    { id: 'lucia.miguel', name: 'Lucia Miguel', level: 'Associate Director', track: 'FinOps' },
+    { id: 'mario.a.ambrosone', name: 'Mario Ambrosone', level: 'Senior Manager', track: 'FinOps' },
+    { id: 'guillermina.zarich', name: 'Guillermina Zarich', level: 'Manager', track: 'EPM' },
+    { id: 'evelyn.mazzini', name: 'Evelyn Mazzini', level: 'Manager', track: 'Platforms' },
+    { id: 'maria.m.varela', name: 'Macarena Varela', level: 'Consultant', track: 'EPM' },
+    { id: 'susana.c.gonzalez', name: 'Susana González', level: 'Manager', track: 'EPM' },
+    { id: 'g.truszkowski', name: 'Guillermo Truszkowski', level: 'Manager', track: 'FinOps' },
+    { id: 'natalia.santelli', name: 'Natalia Andrea Santelli', level: 'Senior Manager', track: 'FinOps' },
+    { id: 'ignacio.hierrezuelo', name: 'Ignacio Hierrezuelo', level: 'Senior Manager', track: 'Platforms' },
+    { id: 'flavio.carrozza', name: 'Flavio Carrozza', level: 'Associate Manager', track: 'Platforms' },
+    { id: 'maria.florencia.val', name: 'María Florencia Val', level: 'Senior Manager', track: 'EPM' },
+    { id: 'alejandra.cristofano', name: 'Alejandra Cristofano', level: 'Consultant', track: 'FinOps' },
+    { id: 'cintia.ledesma', name: 'Cintia Ledesma', level: 'Manager', track: 'Platforms' },
+    { id: 'florencia.ghirelli', name: 'Florencia Ghirelli', level: 'Consultant', track: 'Platforms' },
+    { id: 'lucia.minones', name: 'Lucía Miñones', level: 'Consultant', track: 'FinOps' },
+    { id: 'romina.santander', name: 'Romina Santander', level: 'Senior Manager', track: 'DRC' },
+    { id: 'lucas.fresta', name: 'Lucas Fresta', level: 'Associate Manager', track: 'Platforms' },
+    { id: 'maria.s.urrutia', name: 'María Soledad Urrutia', level: 'Senior Manager', track: 'FinOps' },
+    { id: 'silvia.reyna.rickert', name: 'Silvia Reyna Rickert', level: 'Senior Manager', track: 'EPM' },
+    { id: 'flavia.voloschin', name: 'Flavia Voloschin', level: 'Manager', track: 'FinOps' },
+    { id: 'antonella.s.costanzo', name: 'Antonella Costanzo', level: 'Manager', track: 'FinOps' },
+    { id: 'cynthia.behrends', name: 'Cynthia Behrends', level: 'Manager', track: 'EPM' },
+    { id: 'florencia.higa', name: 'Florencia Higa', level: 'Associate Manager', track: 'EPM' },
+    { id: 'julian.merello', name: 'Julian Merello', level: 'Associate Manager', track: 'EPM' },
+    { id: 'nicolas.goycoolea', name: 'Nicolas Goycoolea', level: 'Senior Analyst', track: 'EPM' },
+    { id: 'jonathan.blejman', name: 'Jonathan Blejman', level: 'Manager', track: 'FinOps' },
+    { id: 'martina.bartolini', name: 'Martina Bartolini', level: 'Associate Manager', track: 'EPM' },
+    { id: 'sebastian.vinao', name: 'Sebastian Vinao', level: 'Manager', track: 'EPM' },
+    { id: 'facundo.toledo', name: 'Facundo Toledo', level: 'Consultant', track: 'EPM' },
+    { id: 'antonela.rossi', name: 'Antonela Rossi Santana', level: 'Consultant', track: 'DRC' },
+    { id: 's.herrero', name: 'Sebastian Herrero', level: 'Manager', track: 'EPM' },
+    { id: 'francisco.podesta', name: 'Francisco Podesta', level: 'Analyst', track: 'FinOps' },
+    { id: 'mauro.vera', name: 'Mauro Vera', level: 'Consultant', track: 'FinOps' },
+    { id: 'claudia.del.v.baez', name: 'Claudia del Valle Baez', level: 'Associate Manager', track: 'EPM' },
+    { id: 'a.x.babuin', name: 'Anabella Babuin', level: 'Associate Director', track: 'FinOps' },
+    { id: 'maria.sol.aguilera', name: 'Maria Sol Aguilera', level: 'Senior Analyst', track: 'EPM' },
+    { id: 'julian.chereque', name: 'Julián Ezequiel Chereque', level: 'Manager', track: 'EPM' },
+    { id: 'agustina.a.diaz', name: 'Agustina Diaz', level: 'Senior Analyst', track: 'Platforms' },
+    { id: 'i.sallaz.joannas', name: 'Indira Sallaz Joannas', level: 'Consultant', track: 'FinOps' },
+    { id: 'ana.bringas', name: 'Ana Bringas', level: 'Consultant', track: 'EPM' },
+    { id: 'diego.wawrynczak', name: 'Diego Wawrynczak', level: 'Associate Manager', track: 'Platforms' },
+    { id: 'nicolas.pepino', name: 'Nicolas Pepino', level: 'Associate Manager', track: 'Platforms' },
+    { id: 'guillermina.zubieta', name: 'Guillermina Zubieta', level: 'Consultant', track: 'EPM' },
+    { id: 'dafne.riera', name: 'Dafne Riera', level: 'Consultant', track: 'FinOps' },
+    { id: 'lucila.tejerina', name: 'Lucila Tejerina', level: 'Consultant', track: 'EPM' },
+    { id: 'julieta.sikora', name: 'Julieta Sikora', level: 'Analyst', track: 'EPM' },
+    { id: 'e.gonzalez.kees', name: 'Enrique Gonzalez Kees', level: 'Analyst', track: 'EPM' },
+    { id: 'rosario.medina', name: 'Rosario Medina', level: 'Senior Analyst', track: 'EPM' },
+    { id: 'santiago.a.ruiz', name: 'Santiago Ruiz', level: 'Analyst', track: 'EPM' },
+    { id: 'tomas.medrano', name: 'Tomas Medrano', level: 'Analyst', track: 'EPM' },
+    { id: 'celina.davola', name: 'Celina Davola', level: 'Consultant', track: 'EPM' },
+    { id: 'martin.grau', name: 'Martin Grau', level: 'Senior Analyst', track: 'EPM' },
+    { id: 'carla.lucero', name: 'Carla Lucero', level: 'Analyst', track: 'EPM' },
+    { id: 'f.arias', name: 'Fernando Arias', level: 'Analyst', track: 'EPM' },
+    { id: 'leonardo.barassi', name: 'Leonardo Barassi', level: 'Consultant', track: 'EPM' },
+    { id: 'carolina.cabrera', name: 'Carolina Cabrera', level: 'Analyst', track: 'EPM' },
+    { id: 'nahuel.alberdi', name: 'Nahuel Alberdi', level: 'Manager', track: 'EPM' },
+    { id: 'facundo.nieto', name: 'Facundo Nieto', level: 'Analyst', track: 'EPM' },
+    { id: 'sofia.lazzarin', name: 'Sofia Lazzarin', level: 'Consultant', track: 'FinOps' },
+    { id: 'v.b.lopez', name: 'Valentina Lopez', level: 'Senior Analyst', track: 'EPM' },
+    { id: 'jorman.manrique', name: 'Jorman Manrique', level: 'Consultant', track: 'EPM' },
+    { id: 'micaela.noya', name: 'Micaela Noya', level: 'Analyst', track: 'EPM' },
+    { id: 'c.a.gutierrez.ocampo', name: 'Cristina Gutierrez Ocampo', level: 'Associate Manager', track: 'Platforms' },
+    { id: 'roberta.palarino', name: 'Roberta Palarino', level: 'Associate Manager', track: 'EPM' },
+    { id: 'tiago.prado', name: 'Tiago Prado', level: 'Consultant', track: 'EPM' },
+    { id: 'carolina.bucich', name: 'Carolina Bucich', level: 'Analyst', track: 'EPM' },
+    { id: 'ana.galsman', name: 'Ana Galsman', level: 'Analyst', track: 'EPM' },
+    { id: 'ramiro.lopez', name: 'Ramiro Lopez', level: 'Analyst', track: 'FinOps' },
+    { id: 'juan.i.da.torre', name: 'Juan Ignacio da Torre', level: 'Analyst', track: 'FinOps' },
+    { id: 'juan.ogorodrik', name: 'Juan Ogorodrik', level: 'Senior Analyst', track: 'EPM' },
+    { id: 'tomas.colomer', name: 'Tomas Colomer', level: 'Senior Analyst', track: 'EPM' },
+    { id: 'dolores.ceverens', name: 'Dolores Ceverens', level: 'Consultant', track: 'Platforms' },
+    { id: 'milena.lucero', name: 'Milena Lucero', level: 'Consultant', track: 'EPM' },
+    { id: 'josemaria.olivieri', name: 'JoseMaria Olivieri', level: 'Manager', track: 'Platforms' },
+    { id: 's.gonzalez.del.solar', name: 'Santiago Gonzalez del Solar', level: 'Analyst', track: 'EPM' },
+    { id: 'nicolas.a.schneider', name: 'Nicolas Schneider', level: 'Analyst', track: 'EPM' },
+    { id: 'debora.vanesa.di.dio', name: 'Debora Vanesa Di Dio', level: 'Senior Manager', track: 'EPM' },
+    { id: 'delfina.sayans', name: 'Delfina Sayans', level: 'Analyst', track: 'EPM' },
+    { id: 'alexia.esersky', name: 'Alexia Esersky', level: 'Associate', track: 'EPM' },
+    { id: 'tomas.carzolio', name: 'Tomas Carzolio', level: 'Associate', track: 'EPM' },
+    { id: 'juan.g.fernandez', name: 'Juan Fernandez', level: 'Analyst', track: 'EPM' },
+    { id: 'santiago.longo', name: 'Santiago Longo', level: 'Analyst', track: 'FinOps' },
+    { id: 'f.m.martinez.thoss', name: 'Fernanda Martinez Thoss', level: 'Consultant', track: 'FinOps' },
+    { id: 'bernadette.v.estrin', name: 'Bernadette Estrin', level: 'Consultant', track: 'FinOps' },
+    { id: 'eliana.a.esquer', name: 'Eliana A. Esquer', level: 'Consultant', track: 'FinOps' },
+    { id: 'julieta.rapan', name: 'Julieta Rapan', level: 'Senior Analyst', track: 'EPM' },
+    { id: 'lucila.sanchez', name: 'Lucila Sanchez Galceran', level: 'Analyst', track: 'FinOps' },
+    { id: 'francisco.j.diez', name: 'Francisco Diez', level: 'Senior Analyst', track: 'EPM' },
+    { id: 'maximiliano.banegas', name: 'Maximiliano Banegas', level: 'Consultant', track: 'FinOps' },
+    { id: 'gabriel.fernadez', name: 'Gabriel Fernadez', level: 'Senior Analyst', track: 'EPM' },
+    { id: 'mariano.r.caviglia', name: 'Mariano Caviglia', level: 'Senior Analyst', track: 'EPM' },
+    { id: 'gaston.gallur', name: 'Gaston Gallur', level: 'Consultant', track: 'EPM' },
+    { id: 'barby.levy', name: 'Barbara Sonia Levy', level: 'Manager', track: 'FinOps' },
+    { id: 'manuel.abasgoitia', name: 'Manuel Abasgoitia', level: 'Consultant', track: 'EPM' },
+    { id: 'alejandro.bandi', name: 'Alejandro Bandi', level: 'Manager', track: 'EPM' },
+    { id: 'gustavo.a.nunez', name: 'Gustavo Nuñez', level: 'Consultant', track: 'Platforms' },
+    { id: 'mariana.solari', name: 'Mariana Solari', level: 'Consultant', track: 'EPM' },
+    { id: 'isidoro.centanni', name: 'Isidoro Centanni', level: 'Manager', track: 'EPM' },
+    { id: 'javier.a.santiago', name: 'Javier Santiago', level: 'Consultant', track: 'Platforms' },
+    { id: 'fabian.f.yamazato', name: 'Fabian F. Yamazato', level: 'Senior Analyst', track: 'Platforms' },
+    { id: 'marcelo.s.roumie', name: 'Marcelo Roumie', level: 'Associate Manager', track: 'Platforms' },
+    { id: 'anahi.m.sanchez', name: 'Anahi Sanchez', level: 'Consultant', track: 'EPM' },
+    { id: 'patricia.b.volpini', name: 'Patricia Volpini', level: 'Consultant', track: 'FinOps' },
+    { id: 'esteban.yona', name: 'Esteban Yona', level: 'Consultant', track: 'EPM' },
+    { id: 'valeria.rubinstein', name: 'Valeria Rubinstein', level: 'Senior Manager', track: 'FinOps' },
+    { id: 'natalia.marchitelli', name: 'Natalia Marchitelli', level: 'Manager', track: 'Platforms' },
+    { id: 'jonathan.ballarini', name: 'Jonathan Ballarini', level: 'Senior Analyst', track: 'EPM' },
+    { id: 's.a.aberastegui', name: 'Sabrina Aberastegui', level: 'Consultant', track: 'EPM' },
+    { id: 'tobias.whelan', name: 'Tobias Whelan', level: 'Consultant', track: 'FinOps' },
+    { id: 'gaston.l.pugliese', name: 'Gaston Pugliese', level: 'Consultant', track: 'EPM' },
+    { id: 'francisco.fregona', name: 'Francisco Fregona', level: 'Consultant', track: 'EPM' },
+    { id: 'marcos.traversaro', name: 'Marcos Traversaro', level: 'Analyst', track: 'EPM' },
+    { id: 'm.a.bruno', name: 'Maria Bruno', level: 'Consultant', track: 'Platforms' },
+    { id: 'ian.rotmistrovsky', name: 'Ian Rotmistrovsky', level: 'Analyst', track: 'EPM' },
+    { id: 'natalin.carballo', name: 'Nati Carballo', level: 'Manager', track: 'FinOps' },
+    { id: 'martin.blufstein', name: 'Martin Blufstein', level: 'Analyst', track: 'EPM' },
+    { id: 'luca.besio', name: 'Luca Besio', level: 'Consultant', track: 'FinOps' },
+    { id: 'martin.n.bruno', name: 'Martin Nicolas Bruno', level: 'Senior Analyst', track: 'EPM' },
+    { id: 'fernanda.reca', name: 'Fernanda Reca', level: 'Manager', track: 'FinOps' },
+    { id: 'lucas.i.filippelli', name: 'Lucas Filippelli', level: 'Analyst', track: 'EPM' },
+    { id: 'francisco.c.lopez', name: 'Francisco Ariel Lopez', level: 'Associate', track: 'Platforms' },
+    { id: 'blas.maria.gallo', name: 'Blas Maria Gallo', level: 'Associate', track: 'EPM' },
+    { id: 'miguel.a.inchausti', name: 'Miguel Inchausti', level: 'Associate', track: 'EPM' },
+    { id: 's.blatter.torcello', name: 'Sofia Blatter Torcello', level: 'Associate', track: 'EPM' },
+    { id: 'l.gonzalez.del.campo', name: 'Lucas Gonzalez Del Campo', level: 'Associate', track: 'EPM' },
+    { id: 'marcos.h.delgui', name: 'Marcos Delgui', level: 'Associate', track: 'Platforms' },
+    { id: 'nina.peretti', name: 'Nina Peretti', level: 'Associate', track: 'EPM' },
+    { id: 'sol.faga', name: 'Sol Faga', level: 'Associate', track: 'FinOps' },
+    { id: 'felicitas.mesa', name: 'Felicitas Mesa', level: 'Associate', track: 'EPM' },
+    { id: 'lola.paulet', name: 'Lola Paulet', level: 'Associate', track: 'EPM' },
+    { id: 'sofia.yanez.arauz', name: 'Sofía Yañez', level: 'Analyst', track: 'EPM' },
+    { id: 'julia.galarce', name: 'Julia Galarce', level: 'Analyst', track: 'EPM' }
   ]
 };
