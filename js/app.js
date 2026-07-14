@@ -1,20 +1,17 @@
 /* ============================================================
-   APP — Recognition Points (v5 — equipo completo + filtros)
-   - Equipo como array de objetos {id, name, level, track}
-   - Buscador por nombre o id
-   - Filtros por track y level
+   APP — Recognition Points (v6 — categorías de premios)
+   Flujo: welcome → voter → category → vote → sent
    ============================================================ */
 
 const App = (() => {
 
-  let team = [];          // copia de APP_CONFIG.TEAM
+  let team = [];
   let currentVoter = null;
-  let selectedNomineeId = null;
+  let selectedCategory = null;    // objeto de APP_CONFIG.CATEGORIES
+  let selectedNomineeIds = [];    // array de ids (multi-select para equipo)
   let sessionVotes = [];
 
-  // Estado de filtros
   let filters = {
-    track: 'all',
     level: 'all',
     search: ''
   };
@@ -38,7 +35,7 @@ const App = (() => {
   }
   function normalize(s) {
     return String(s || '').toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // sin tildes
+      .normalize('NFD').replace(/[̀-ͯ]/g, '');
   }
 
   /* ---------- screens ---------- */
@@ -47,8 +44,11 @@ const App = (() => {
     const target = $('screen-' + name);
     if (target) target.classList.add('active');
     const tagMap = {
-      welcome: 'Inicio', voter: 'Identificación',
-      vote: 'Votación', sent: 'Enviado'
+      welcome: 'Inicio',
+      voter: 'Identificación',
+      category: 'Categoría',
+      vote: 'Nominación',
+      sent: 'Enviado'
     };
     const tag = $('navTag');
     if (tag) tag.textContent = tagMap[name] || name;
@@ -66,18 +66,85 @@ const App = (() => {
     if (!name) { $('voterAlert').style.display = 'block'; return; }
     currentVoter = name;
     sessionVotes = [];
-    go('vote');
-    $('currentVoterName').textContent = currentVoter;
+    selectedCategory = null;
+    selectedNomineeIds = [];
+    renderCategoryGrid();
+    go('category');
+  }
+
+  /* ---------- category ---------- */
+  function renderCategoryGrid() {
+    const grid = $('categoryGrid');
+    if (!grid) return;
+    const cats = cfg().CATEGORIES;
+
+    const individualCats = cats.filter(c => c.type === 'individual');
+    const teamCats = cats.filter(c => c.type === 'team');
+
+    function catCard(cat) {
+      const eligLabel = cat.eligibleLevels.length
+        ? cat.eligibleLevels.join(' · ')
+        : 'Todos los niveles';
+      const teamNote = cat.type === 'team'
+        ? `<span class="cat-team-note">Seleccioná hasta ${cat.maxNominees} personas</span>`
+        : '';
+      return `
+        <button class="action-card cat-card" onclick="App.selectCategory('${cat.id}')">
+          <span class="cat-badge">${cat.badge}</span>
+          <h3 class="cat-name">${cat.name}</h3>
+          <p class="cat-desc">${cat.description}</p>
+          <span class="cat-eligibility">Elegibles: ${eligLabel}</span>
+          ${teamNote}
+          <span class="arrow">Nominar →</span>
+        </button>`;
+    }
+
+    grid.innerHTML = `
+      <div class="section-rule" style="margin-bottom:16px">
+        <span class="label">— Premios Individuales</span>
+        <span class="line"></span>
+      </div>
+      <div class="cat-grid cat-grid-3">
+        ${individualCats.map(catCard).join('')}
+      </div>
+      <div class="section-rule" style="margin-top:40px; margin-bottom:16px">
+        <span class="label">— Premios de Equipo</span>
+        <span class="line"></span>
+      </div>
+      <div class="cat-grid cat-grid-2">
+        ${teamCats.map(catCard).join('')}
+      </div>`;
+  }
+
+  function selectCategory(categoryId) {
+    const cats = cfg().CATEGORIES;
+    selectedCategory = cats.find(c => c.id === categoryId) || null;
+    if (!selectedCategory) return;
+    selectedNomineeIds = [];
     resetFilters();
+
+    // Actualizar contexto en la pantalla de votación
+    const catCtx = $('categoryContext');
+    if (catCtx) catCtx.textContent = selectedCategory.name;
+    const catBadgeCtx = $('categoryBadgeCtx');
+    if (catBadgeCtx) catBadgeCtx.textContent = selectedCategory.badge;
+    const voteHint = $('voteHint');
+    if (voteHint) {
+      voteHint.textContent = selectedCategory.type === 'team'
+        ? `Seleccioná hasta ${selectedCategory.maxNominees} personas del equipo.`
+        : 'Elegí a la persona que querés nominar.';
+    }
+
     renderNomineeGrid();
+    go('vote');
+    updateSelectionBadge();
   }
 
   /* ---------- filtros ---------- */
   function setFilter(btn) {
-    const filter = btn.dataset.filter;   // 'track' | 'level'
-    const value = btn.dataset.value;     // 'all' | 'FinOps' | etc.
+    const filter = btn.dataset.filter;
+    const value = btn.dataset.value;
     filters[filter] = value;
-    // marcar visual
     document.querySelectorAll(`.filter-chip[data-filter="${filter}"]`)
       .forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
@@ -92,9 +159,11 @@ const App = (() => {
   }
 
   function resetFilters() {
-    filters = { track: 'all', level: 'all', search: '' };
-    $('searchInput').value = '';
-    $('searchClear').style.display = 'none';
+    filters = { level: 'all', search: '' };
+    const si = $('searchInput');
+    if (si) si.value = '';
+    const sc = $('searchClear');
+    if (sc) sc.style.display = 'none';
     document.querySelectorAll('.filter-chip').forEach(c => {
       c.classList.toggle('active', c.dataset.value === 'all');
     });
@@ -107,19 +176,21 @@ const App = (() => {
   }
 
   /* ---------- vote / nominees ---------- */
-  function getFilteredTeam() {
+  function getEligibleTeam() {
+    // Primero filtrar por elegibilidad de la categoría
+    let base = team;
+    if (selectedCategory && selectedCategory.eligibleLevels.length > 0) {
+      base = team.filter(p => selectedCategory.eligibleLevels.includes(p.level));
+    }
+
     const voterSlug = currentVoter
       ? normalize(currentVoter).replace(/\s+/g, '.')
       : '';
     const search = normalize(filters.search);
 
-    return team.filter(p => {
-      // No mostrar al votante (best effort, tomando su nombre escrito)
+    return base.filter(p => {
       if (p.id === voterSlug) return false;
-
-      if (filters.track !== 'all' && p.track !== filters.track) return false;
       if (filters.level !== 'all' && p.level !== filters.level) return false;
-
       if (search) {
         const haystack = normalize(p.name + ' ' + p.id);
         if (!haystack.includes(search)) return false;
@@ -129,13 +200,20 @@ const App = (() => {
   }
 
   function renderNomineeGrid() {
-    const filtered = getFilteredTeam();
-    const alreadyNomIds = new Set(sessionVotes.map(v => v.nomineeId));
-    selectedNomineeId = null;
+    const filtered = getEligibleTeam();
+
+    // Solo deshabilitar los que ya fueron nominados en esta sesión y esta categoría
+    const alreadyNomIds = new Set(
+      sessionVotes
+        .filter(v => v.categoryId === (selectedCategory ? selectedCategory.id : null))
+        .map(v => v.nomineeIds)
+        .flat()
+    );
 
     const grid = $('nomineeGrid');
     const empty = $('emptyResults');
     const counter = $('resultCount');
+    if (!grid) return;
 
     if (!filtered.length) {
       grid.innerHTML = '';
@@ -143,21 +221,30 @@ const App = (() => {
       counter.textContent = '';
     } else {
       empty.style.display = 'none';
+      const isTeam = selectedCategory && selectedCategory.type === 'team';
       counter.textContent = `${filtered.length} persona${filtered.length === 1 ? '' : 's'}`;
 
       grid.innerHTML = filtered.map(p => {
-        const voted = alreadyNomIds.has(p.id);
+        const alreadyVoted = alreadyNomIds.has(p.id);
+        const selected = selectedNomineeIds.includes(p.id);
         const safeId = p.id.replace(/'/g, "\\'");
+        const classes = [
+          'nominee-card',
+          alreadyVoted ? 'disabled' : '',
+          selected ? 'selected' : '',
+          isTeam ? 'multi' : ''
+        ].filter(Boolean).join(' ');
+
         return `
-          <div class="nominee-card ${voted ? 'disabled' : ''}"
-               ${voted ? '' : `onclick="App.selectNominee('${safeId}', this)"`}>
+          <div class="${classes}"
+               ${alreadyVoted ? '' : `onclick="App.selectNominee('${safeId}', this)"`}>
             <span class="initials">${initials(p.name)}</span>
             <div class="name">${p.name}</div>
             <div class="role">${p.level} · ${p.track}</div>
             <div class="nominee-id">${p.id}</div>
-            ${voted
+            ${alreadyVoted
               ? '<div class="check">✓ Ya nominado</div>'
-              : '<div class="check">✓</div>'}
+              : `<div class="check">${selected ? '✓' : (isTeam ? '☐' : '✓')}</div>`}
           </div>`;
       }).join('');
     }
@@ -165,16 +252,53 @@ const App = (() => {
     $('justification').value = '';
     updateCharCount();
     $('sessionVoteCount').textContent = sessionVotes.length;
+    $('voteAlert').style.display = 'none';
   }
 
   function selectNominee(id, el) {
-    document.querySelectorAll('#nomineeGrid .nominee-card:not(.disabled)')
-      .forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedNomineeId = id;
+    if (!selectedCategory) return;
+
+    if (selectedCategory.type === 'individual') {
+      document.querySelectorAll('#nomineeGrid .nominee-card.selected')
+        .forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedNomineeIds = [id];
+    } else {
+      // Multi-select para equipos
+      const idx = selectedNomineeIds.indexOf(id);
+      if (idx === -1) {
+        if (selectedNomineeIds.length >= selectedCategory.maxNominees) {
+          toast(`Máximo ${selectedCategory.maxNominees} personas para ${selectedCategory.name}.`);
+          return;
+        }
+        selectedNomineeIds.push(id);
+        el.classList.add('selected');
+        el.querySelector('.check').textContent = '✓';
+      } else {
+        selectedNomineeIds.splice(idx, 1);
+        el.classList.remove('selected');
+        el.querySelector('.check').textContent = '☐';
+      }
+    }
+
+    updateSelectionBadge();
     $('voteAlert').style.display = 'none';
-    // scroll suave al textarea
-    $('justification').focus({ preventScroll: true });
+
+    if (selectedCategory.type === 'individual') {
+      $('justification').focus({ preventScroll: true });
+    }
+  }
+
+  function updateSelectionBadge() {
+    const badge = $('selectionBadge');
+    if (!badge || !selectedCategory) return;
+    const count = selectedNomineeIds.length;
+    const max = selectedCategory.maxNominees;
+    if (selectedCategory.type === 'individual') {
+      badge.textContent = count ? '1 persona seleccionada' : 'Ninguna seleccionada';
+    } else {
+      badge.textContent = `${count} de ${max} seleccionada${count !== 1 ? 's' : ''}`;
+    }
   }
 
   function updateCharCount() {
@@ -204,40 +328,53 @@ const App = (() => {
       .trim();
   }
 
-  /* ---------- BUILD MAILTO ---------- */
+  /* ---------- BUILD MAILTO ----------
+     Nuevo schema (v6):
+     Subject: RP-FY26-VOTE|uid|voterName|categoryId|nominee1;nominee2|timestamp
+     Body: justificación (texto libre, sin límite de subject)
+     Power Automate: split(subject,'|') → [0..5], body = justificación
+  ------------------------------------------------------------ */
   function buildMailtoUrl(vote) {
     const c = cfg();
+    const nominees = vote.nomineeIds.join(c.MAIL.NOMINEE_SEP);
     const fields = [
       c.MAIL.SUBJECT_PREFIX,
       vote.id,
       sanitizeForSubject(vote.voter),
-      sanitizeForSubject(vote.nomineeId),
-      sanitizeForSubject(vote.justification),
+      vote.categoryId,
+      nominees,
       vote.timestamp
     ];
     const subject = fields.join(c.MAIL.FIELD_SEP);
+    const body = vote.justification;
     return 'mailto:' + encodeURIComponent(c.MAIL.ADMIN_EMAIL) +
       '?subject=' + encodeURIComponent(subject) +
-      '&body=' + encodeURIComponent(c.MAIL.BODY);
+      '&body=' + encodeURIComponent(body);
   }
 
   /* ---------- SUBMIT ---------- */
   function submitVote() {
     const just = $('justification').value.trim();
-    if (!selectedNomineeId || !just) {
+    if (selectedNomineeIds.length === 0 || !just) {
       $('voteAlert').style.display = 'block';
       return;
     }
-    const nominee = team.find(p => p.id === selectedNomineeId);
-    if (!nominee) {
-      toast('Error: persona no encontrada.');
+    if (!selectedCategory) {
+      toast('Error: seleccioná una categoría primero.');
       return;
     }
+
+    const nominees = selectedNomineeIds
+      .map(id => team.find(p => p.id === id))
+      .filter(Boolean);
+
     const vote = {
       id: uid(),
       voter: currentVoter,
-      nomineeId: nominee.id,
-      nomineeName: nominee.name,
+      categoryId: selectedCategory.id,
+      categoryName: selectedCategory.name,
+      nomineeIds: [...selectedNomineeIds],
+      nomineeNames: nominees.map(n => n.name),
       justification: just,
       timestamp: new Date().toISOString()
     };
@@ -258,22 +395,29 @@ const App = (() => {
 
   function showSentScreen(vote) {
     go('sent');
-    $('sentNomineeName').textContent = vote.nomineeName;
+    const names = vote.nomineeNames.join(', ');
+    $('sentNomineeName').textContent = names;
+    $('sentCategoryName').textContent = vote.categoryName;
     $('sentSessionLabel').textContent =
       sessionVotes.length === 1
         ? '1 nominación en esta sesión'
         : `${sessionVotes.length} nominaciones en esta sesión`;
   }
+
   function voteAgain() {
-    go('vote');
-    $('currentVoterName').textContent = currentVoter;
-    resetFilters();
-    renderNomineeGrid();
+    selectedCategory = null;
+    selectedNomineeIds = [];
+    renderCategoryGrid();
+    go('category');
   }
+
   function finishVoting() {
     sessionVotes = [];
+    selectedCategory = null;
+    selectedNomineeIds = [];
     go('welcome');
   }
+
   function resendLast() {
     if (!sessionVotes.length) return;
     const last = sessionVotes[sessionVotes.length - 1];
@@ -294,7 +438,8 @@ const App = (() => {
 
   return {
     init, go, startSurvey,
-    confirmVoter, selectNominee, updateCharCount,
+    confirmVoter, selectCategory,
+    selectNominee, updateCharCount, updateSelectionBadge,
     submitVote, voteAgain, finishVoting, resendLast,
     setFilter, applyFilters, clearSearch
   };
