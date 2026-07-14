@@ -3,24 +3,127 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Recognition Points · FY26</title>
-<meta name="description" content="Recognition Points FY26 — CFO&EV. Reconocé a quienes hicieron una diferencia este año.">
+<title>Recognition Awards · GN Argentina · FY26</title>
+<meta name="description" content="GN Argentina Recognition Awards FY26 — Nominá a quienes marcaron una diferencia.">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="css/styles.css">
+
+<style>
+  /* ---------- CATEGORY SCREEN ---------- */
+  .cat-grid {
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+  }
+  .cat-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .cat-grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+  .cat-card {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .cat-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--acn-purple);
+    font-family: var(--body);
+  }
+  .cat-name {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: 24px;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+  .cat-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.55;
+    flex: 1;
+  }
+  .cat-eligibility {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted-2);
+    font-family: var(--body);
+    padding: 4px 0;
+    border-top: 1px solid var(--line);
+    margin-top: 4px;
+  }
+  .cat-team-note {
+    font-size: 11px;
+    color: var(--acn-purple);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  /* ---------- SELECTION BADGE ---------- */
+  .selection-badge {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--acn-purple);
+    padding: 4px 10px;
+    border: 1px solid var(--acn-purple);
+    border-radius: 2px;
+    background: var(--acn-purple-soft);
+  }
+
+  /* ---------- CATEGORY CONTEXT IN VOTE BAR ---------- */
+  .category-tag {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .category-tag .label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .category-tag .name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--acn-purple);
+  }
+
+  /* ---------- MULTI-SELECT HINT IN NOMINEE GRID ---------- */
+  .nominee-card.multi .check { color: var(--muted-2); }
+  .nominee-card.multi.selected .check { color: var(--acn-purple); }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 768px) {
+    .cat-grid-3 { grid-template-columns: 1fr; }
+    .cat-grid-2 { grid-template-columns: 1fr; }
+  }
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .cat-grid-3 { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
 </head>
 <body class="paper">
 
 <header class="topbar">
   <a href="#" class="brand" onclick="App.go('welcome');return false;">
     <span class="chev">&gt;</span>
-    Recognition Points
+    Recognition Awards
   </a>
   <div class="topbar-meta">
-    <span><span class="dot"></span> FY26 · CFO&amp;EV</span>
+    <span><span class="dot"></span> FY26 · GN Argentina</span>
     <span id="navTag">Inicio</span>
   </div>
 </header>
@@ -30,7 +133,7 @@
   <div class="hero">
     <div class="hero-grid">
       <div>
-        <span class="eyebrow">Encuesta anual · CFO&amp;EV</span>
+        <span class="eyebrow">GN Argentina · Recognition Awards FY26</span>
         <h1 style="margin-top:18px">
           Reconocer<br>
           es <em>elegir</em><br>
@@ -39,8 +142,8 @@
       </div>
       <div class="hero-side">
         <span class="eyebrow">Por qué este espacio</span>
-        <p>Este formulario es para nominar a quienes, más allá de sus responsabilidades, marcaron una diferencia durante el año.</p>
-        <p>Una iniciativa, un esfuerzo extra, una solución que nadie más vio. El reconocimiento del equipo importa, y este es el lugar para hacerlo explícito.</p>
+        <p>Los Recognition Awards son para reconocer a individuos y equipos que demuestran espíritu de trabajo en equipo, compromiso, innovación y un valor diferenciado para los clientes.</p>
+        <p>Cinco categorías, un solo objetivo: celebrar el talento excepcional dentro de GN Argentina.</p>
       </div>
     </div>
   </div>
@@ -49,8 +152,8 @@
     <div class="action-grid action-grid-single">
       <button class="action-card" onclick="App.startSurvey()">
         <span class="num">— 01</span>
-        <h3>Iniciar la<br>nominación</h3>
-        <p>Identificate, elegí a tus compañeros y describí por qué su contribución merece reconocimiento. Lleva pocos minutos.</p>
+        <h3>Nominar<br>ahora</h3>
+        <p>Elegí la categoría de premio, seleccioná a la persona o equipo, y contá en qué se destacaron. Lleva pocos minutos.</p>
         <span class="arrow">Comenzar →</span>
       </button>
     </div>
@@ -58,10 +161,11 @@
     <div class="info-card">
       <span class="eyebrow">— Cómo funciona</span>
       <ol class="steps">
-        <li><strong>Completás</strong> tu nombre y elegís a quién querés nominar.</li>
-        <li><strong>Escribís</strong> una justificación específica (hasta 200 caracteres).</li>
-        <li><strong>Se abre Outlook</strong> con un mail ya armado dirigido al equipo organizador.</li>
-        <li><strong>Apretás "Enviar"</strong> en Outlook. Tu nominación queda registrada automáticamente.</li>
+        <li><strong>Ingresás</strong> tu nombre para identificarte.</li>
+        <li><strong>Elegís</strong> la categoría de premio que aplica.</li>
+        <li><strong>Seleccionás</strong> a la persona (o al equipo) a nominar.</li>
+        <li><strong>Escribís</strong> la justificación específica.</li>
+        <li><strong>Se abre Outlook</strong> con el mail ya armado. Apretás Enviar.</li>
       </ol>
     </div>
   </div>
@@ -72,11 +176,11 @@
   <div class="hero" style="padding: 80px 40px 56px">
     <div class="hero-grid">
       <div>
-        <span class="eyebrow">— Paso 01</span>
+        <span class="eyebrow">— Paso 01 de 04</span>
         <h1 style="margin-top:18px">¿Quién <em>sos</em>?</h1>
       </div>
       <div class="hero-side">
-        <p>Tu identidad real se va a tomar de tu cuenta de Outlook al momento de enviar el mail. Este nombre es solo para el flujo de la página.</p>
+        <p>Tu identidad real se toma de tu cuenta de Outlook al momento de enviar. Este nombre es solo para el flujo de la página.</p>
       </div>
     </div>
   </div>
@@ -94,16 +198,38 @@
   </div>
 </section>
 
+<!-- ============== CATEGORY ============== -->
+<section class="screen" id="screen-category">
+  <div class="hero" style="padding: 80px 40px 56px">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">— Paso 02 de 04</span>
+        <h1 style="margin-top:18px">¿Qué querés<br><em>premiar</em>?</h1>
+      </div>
+      <div class="hero-side">
+        <p>Elegí la categoría que mejor describe el aporte de la persona o equipo que querés nominar. Podés hacer nominaciones en distintas categorías.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div id="categoryGrid"></div>
+    <div style="display:flex; justify-content:flex-start; gap: 12px; margin-top: 32px; flex-wrap: wrap;">
+      <button class="btn btn-ghost" onclick="App.go('voter')">← Atrás</button>
+    </div>
+  </div>
+</section>
+
 <!-- ============== VOTE ============== -->
 <section class="screen" id="screen-vote">
   <div class="hero" style="padding: 64px 40px 40px">
     <div class="hero-grid">
       <div>
-        <span class="eyebrow">— Paso 02</span>
-        <h1 style="margin-top:18px">Nominá<br>a alguien.</h1>
+        <span class="eyebrow">— Paso 03 de 04</span>
+        <h1 style="margin-top:18px">Elegí<br>a <em>quién</em>.</h1>
       </div>
       <div class="hero-side">
-        <p>Elegí una persona y contá qué hizo este año que merezca reconocimiento. Podés nominar a tantas como quieras, una por vez.</p>
+        <p id="voteHint">Seleccioná a la persona que querés nominar.</p>
       </div>
     </div>
   </div>
@@ -114,8 +240,15 @@
         <span class="label">Votando como</span>
         <span class="name" id="currentVoterName">—</span>
       </div>
-      <div class="session-count">
-        Esta sesión: <strong id="sessionVoteCount" class="tabular">0</strong> nominación(es)
+      <div class="category-tag">
+        <span class="label">Categoría</span>
+        <span class="name" id="categoryContext">—</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span class="selection-badge" id="selectionBadge">Ninguna seleccionada</span>
+        <div class="session-count">
+          Esta sesión: <strong id="sessionVoteCount" class="tabular">0</strong>
+        </div>
       </div>
     </div>
 
@@ -135,19 +268,13 @@
 
     <div class="filter-row">
       <div class="filter-group">
-        <span class="filter-label">Track:</span>
-        <button class="filter-chip active" data-filter="track" data-value="all" onclick="App.setFilter(this)">Todos</button>
-        <button class="filter-chip" data-filter="track" data-value="FinOps" onclick="App.setFilter(this)">FinOps</button>
-        <button class="filter-chip" data-filter="track" data-value="EPM" onclick="App.setFilter(this)">EPM</button>
-        <button class="filter-chip" data-filter="track" data-value="Platforms" onclick="App.setFilter(this)">Platforms</button>
-        <button class="filter-chip" data-filter="track" data-value="DRC" onclick="App.setFilter(this)">DRC</button>
-      </div>
-      <div class="filter-group">
         <span class="filter-label">Nivel:</span>
         <button class="filter-chip active" data-filter="level" data-value="all" onclick="App.setFilter(this)">Todos</button>
-        <button class="filter-chip" data-filter="level" data-value="Director" onclick="App.setFilter(this)">Director</button>
+        <button class="filter-chip" data-filter="level" data-value="M. Director" onclick="App.setFilter(this)">M. Director</button>
+        <button class="filter-chip" data-filter="level" data-value="Associate Director" onclick="App.setFilter(this)">Assoc Director</button>
         <button class="filter-chip" data-filter="level" data-value="Senior Manager" onclick="App.setFilter(this)">Sr Manager</button>
         <button class="filter-chip" data-filter="level" data-value="Manager" onclick="App.setFilter(this)">Manager</button>
+        <button class="filter-chip" data-filter="level" data-value="Associate Manager" onclick="App.setFilter(this)">Assoc Manager</button>
         <button class="filter-chip" data-filter="level" data-value="Consultant" onclick="App.setFilter(this)">Consultant</button>
         <button class="filter-chip" data-filter="level" data-value="Senior Analyst" onclick="App.setFilter(this)">Sr Analyst</button>
         <button class="filter-chip" data-filter="level" data-value="Analyst" onclick="App.setFilter(this)">Analyst</button>
@@ -163,29 +290,29 @@
     </p>
 
     <div class="section-rule" style="margin-top: 40px">
-      <span class="label">— Justificación</span>
+      <span class="label">— Paso 04 de 04 · Justificación</span>
       <span class="line"></span>
     </div>
 
     <div class="info-card-sm" style="margin-bottom: 18px; margin-top: 0;">
       <p>
         <strong>Sé específico.</strong> Contá una situación concreta: qué hizo, en qué momento, qué impacto tuvo.
-        Frases genéricas como <em>"es un crack"</em> o <em>"siempre ayuda"</em> no diferencian a la persona del resto del equipo y le quitan valor al reconocimiento.
+        Frases genéricas no diferencian a la persona del resto y le quitan valor al reconocimiento.
       </p>
     </div>
 
     <div class="field">
       <label for="justification">¿Por qué merece este reconocimiento?</label>
-      <textarea id="justification" placeholder="Ej: 'Lideró la migración de XYZ en Q3 cuando el equipo estaba bajo presión. Su iniciativa nos ahorró 2 semanas de trabajo manual.'" maxlength="200" oninput="App.updateCharCount()"></textarea>
+      <textarea id="justification" placeholder="Ej: 'Lideró la migración de XYZ en Q3 cuando el equipo estaba bajo presión. Su iniciativa nos ahorró 2 semanas de trabajo manual.'" maxlength="500" oninput="App.updateCharCount()"></textarea>
       <div class="helper right counter">
-        <span id="charCount" class="tabular">0</span> / <span id="charMax" class="tabular">200</span>
+        <span id="charCount" class="tabular">0</span> / <span id="charMax" class="tabular">500</span>
       </div>
     </div>
 
-    <div class="alert warn" id="voteAlert" style="display:none">⚠ Seleccioná una persona y escribí la justificación.</div>
+    <div class="alert warn" id="voteAlert" style="display:none">⚠ Seleccioná al menos una persona y escribí la justificación.</div>
 
     <div style="display:flex; justify-content:space-between; gap: 12px; margin-top: 24px; flex-wrap: wrap;">
-      <button class="btn btn-ghost" onclick="App.go('welcome')">← Salir</button>
+      <button class="btn btn-ghost" onclick="App.go('category')">← Cambiar categoría</button>
       <button class="btn btn-acn" onclick="App.submitVote()">📧 &nbsp;Abrir Outlook y enviar →</button>
     </div>
   </div>
@@ -196,7 +323,7 @@
   <div class="hero" style="padding: 80px 40px 40px">
     <div class="hero-grid">
       <div>
-        <span class="eyebrow">— Paso 03</span>
+        <span class="eyebrow">— ¡Listo!</span>
         <h1 style="margin-top:18px">Revisá <em>Outlook</em>.</h1>
       </div>
       <div class="hero-side">
@@ -208,6 +335,7 @@
   <div class="wrap-narrow">
     <div class="sent-card">
       <span class="eyebrow">— Última nominación</span>
+      <p class="helper" style="margin-bottom:4px" id="sentCategoryName">—</p>
       <h2>Nominaste a<br><em id="sentNomineeName">—</em></h2>
       <p class="lede" id="sentSessionLabel">—</p>
 
@@ -218,7 +346,7 @@
       </div>
 
       <div style="display:flex; gap: 12px; margin-top: 32px; flex-wrap: wrap;">
-        <button class="btn btn-acn" onclick="App.voteAgain()">+ Nominar a otra persona</button>
+        <button class="btn btn-acn" onclick="App.voteAgain()">+ Nominar en otra categoría</button>
         <button class="btn btn-ghost" onclick="App.finishVoting()">Ya terminé</button>
       </div>
     </div>
@@ -229,8 +357,8 @@
 <div class="toast" id="toast"><span class="dot"></span><span id="toastMsg"></span></div>
 
 <footer>
-  <div>CFO&amp;EV · Recognition Points FY26</div>
-  <div>Hecho con cuidado por el equipo</div>
+  <div>GN Argentina · Recognition Awards FY26</div>
+  <div>Hecho con cuidado por el equipo CFO&amp;EV</div>
 </footer>
 
 <script src="js/config.js"></script>
