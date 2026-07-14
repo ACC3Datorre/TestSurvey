@@ -371,18 +371,19 @@ const App = (() => {
       .trim();
   }
   function sanitizeForBody(text) {
-    // Eliminar || y saltos de línea para que el parseo en Power Automate sea limpio
+    // Eliminar separadores ~ y | para que el parseo en Power Automate sea limpio
     return String(text)
-      .replace(/\|\|/g, '/')
+      .replace(/~/g, '-')
+      .replace(/\|/g, '/')
       .replace(/[\r\n]+/g, ' ')
       .trim();
   }
 
   /* ---------- BUILD MAILTO ----------
      Subject: RP-FY26-VOTE|uid|voterName|timestamp
-     Body (una línea por categoría):
-       categoryId||nominee1;nominee2||justificacion
-     Power Automate: split(body, '\n') → por línea split(linea, '||')
+     Body: 5 segmentos fijos separados por |, uno por categoría (siempre las 5, vacías si no nominó):
+       inspiring-leader~nom1;nom2~justificacion|breaking-new~nom~just|...
+     Power Automate: split(body, '|')[0..4] → split(seg, '~')[1]=nominees, [2]=just
   ------------------------------------------------------------ */
   function buildMailtoUrl() {
     const c    = cfg();
@@ -395,16 +396,21 @@ const App = (() => {
       ts
     ].join(c.MAIL.FIELD_SEP);
 
-    const lines = filledNominations().map(cat => {
+    // Siempre las 5 categorías en orden fijo; vacías si no fueron nominadas
+    const body = c.CATEGORIES.map(cat => {
       const nom    = nominations[cat.id];
-      const nomStr = nom.nomineeIds.join(c.MAIL.NOMINEE_SEP);
-      const just   = sanitizeForBody(nom.justification);
-      return `${cat.id}||${nomStr}||${just}`;
-    });
+      const nomStr = (nom && nom.nomineeIds.length > 0)
+        ? nom.nomineeIds.join(c.MAIL.NOMINEE_SEP)
+        : '';
+      const just   = (nom && nom.justification.trim())
+        ? sanitizeForBody(nom.justification)
+        : '';
+      return `${cat.id}~${nomStr}~${just}`;
+    }).join('|');
 
     return 'mailto:' + encodeURIComponent(c.MAIL.ADMIN_EMAIL) +
       '?subject=' + encodeURIComponent(subject) +
-      '&body='    + encodeURIComponent(lines.join('\n'));
+      '&body='    + encodeURIComponent(body);
   }
 
   /* ---------- SEND ---------- */
