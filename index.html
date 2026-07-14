@@ -9,110 +9,62 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
 <link rel="stylesheet" href="css/styles.css">
 
 <style>
-  /* ---------- CATEGORY SCREEN ---------- */
-  .cat-grid {
-    display: grid;
-    gap: 0;
-    border-top: 1px solid var(--line);
-    border-left: 1px solid var(--line);
-  }
-  .cat-grid-3 { grid-template-columns: repeat(3, 1fr); }
-  .cat-grid-2 { grid-template-columns: repeat(2, 1fr); }
+/* ---- HUB ---- */
+.hub-list { display: flex; flex-direction: column; gap: 0; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.hub-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 18px 24px;
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  background: var(--paper); transition: background .15s;
+}
+.hub-row:hover { background: #fff; }
+.hub-row--filled { background: #fff; }
+.hub-row-info { display: flex; align-items: baseline; gap: 12px; flex: 1; flex-wrap: wrap; }
+.hub-row-badge {
+  font-size: 10px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--acn-purple); white-space: nowrap;
+}
+.hub-row-name { font-weight: 600; font-size: 15px; }
+.hub-row-nominees { font-size: 13px; color: var(--success); font-weight: 500; }
+.hub-row-empty { font-size: 13px; color: var(--muted-2); }
 
-  .cat-card {
-    text-align: left;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .cat-badge {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--acn-purple);
-    font-family: var(--body);
-  }
-  .cat-name {
-    font-family: var(--display);
-    font-weight: 400;
-    font-size: 24px;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-    color: var(--ink);
-  }
-  .cat-desc {
-    font-size: 13px;
-    color: var(--muted);
-    line-height: 1.55;
-    flex: 1;
-  }
-  .cat-eligibility {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--muted-2);
-    font-family: var(--body);
-    padding: 4px 0;
-    border-top: 1px solid var(--line);
-    margin-top: 4px;
-  }
-  .cat-team-note {
-    font-size: 11px;
-    color: var(--acn-purple);
-    font-weight: 600;
-    letter-spacing: 0.04em;
-  }
+/* ---- NOMINEES SCREEN context bar ---- */
+.nom-context-bar {
+  display: flex; align-items: center; gap: 24px;
+  padding: 12px 0 20px; flex-wrap: wrap;
+}
+.nom-context-cat { display: flex; flex-direction: column; gap: 2px; }
+.nom-context-cat .label { font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.nom-context-cat .name  { font-size: 15px; font-weight: 600; color: var(--acn-purple); }
+.selection-badge {
+  font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--acn-purple); padding: 4px 10px;
+  border: 1px solid var(--acn-purple); border-radius: 2px; background: var(--acn-purple-soft);
+}
+.nominee-card.multi .check { color: var(--muted-2); }
+.nominee-card.multi.selected .check { color: var(--acn-purple); }
 
-  /* ---------- SELECTION BADGE ---------- */
-  .selection-badge {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--acn-purple);
-    padding: 4px 10px;
-    border: 1px solid var(--acn-purple);
-    border-radius: 2px;
-    background: var(--acn-purple-soft);
-  }
+/* ---- REVIEW ---- */
+.review-card {
+  border: 1px solid var(--line); border-radius: var(--radius-lg);
+  padding: 20px 24px; margin-bottom: 14px; background: #fff;
+}
+.review-cat-badge { font-size: 10px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--acn-purple); display: block; margin-bottom: 4px; }
+.review-cat-name  { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+.review-nominees  { font-size: 14px; color: var(--ink-2); margin-bottom: 8px; }
+.review-justification { font-size: 13px; color: var(--muted); font-style: italic; border-left: 2px solid var(--acn-purple); padding-left: 10px; }
 
-  /* ---------- CATEGORY CONTEXT IN VOTE BAR ---------- */
-  .category-tag {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .category-tag .label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .category-tag .name {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--acn-purple);
-  }
+/* ---- SENT detail ---- */
+.sent-row { font-size: 14px; color: var(--ink-2); padding: 6px 0; border-bottom: 1px solid var(--line); }
+.sent-row:last-child { border-bottom: none; }
 
-  /* ---------- MULTI-SELECT HINT IN NOMINEE GRID ---------- */
-  .nominee-card.multi .check { color: var(--muted-2); }
-  .nominee-card.multi.selected .check { color: var(--acn-purple); }
-
-  /* ---------- RESPONSIVE ---------- */
-  @media (max-width: 768px) {
-    .cat-grid-3 { grid-template-columns: 1fr; }
-    .cat-grid-2 { grid-template-columns: 1fr; }
-  }
-  @media (min-width: 769px) and (max-width: 1024px) {
-    .cat-grid-3 { grid-template-columns: repeat(2, 1fr); }
-  }
+/* ---- responsive ---- */
+@media (max-width: 640px) {
+  .hub-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+}
 </style>
 </head>
 <body class="paper">
@@ -142,114 +94,100 @@
       </div>
       <div class="hero-side">
         <span class="eyebrow">Por qué este espacio</span>
-        <p>Los Recognition Awards son para reconocer a individuos y equipos que demuestran espíritu de trabajo en equipo, compromiso, innovación y un valor diferenciado para los clientes.</p>
-        <p>Cinco categorías, un solo objetivo: celebrar el talento excepcional dentro de GN Argentina.</p>
+        <p>Los Recognition Awards son para reconocer a individuos y equipos que demuestran espíritu de trabajo en equipo, compromiso, innovación y un valor diferenciado.</p>
+        <p>Cinco categorías, un solo envío. Completás las que quieras y mandás todo junto.</p>
       </div>
     </div>
   </div>
-
-  <div class="wrap" style="padding-top: 24px">
+  <div class="wrap" style="padding-top:24px">
     <div class="action-grid action-grid-single">
       <button class="action-card" onclick="App.startSurvey()">
         <span class="num">— 01</span>
         <h3>Nominar<br>ahora</h3>
-        <p>Elegí la categoría de premio, seleccioná a la persona o equipo, y contá en qué se destacaron. Lleva pocos minutos.</p>
+        <p>Elegí las categorías que apliquen, seleccioná a las personas, escribí la justificación y mandá todo en un solo mail.</p>
         <span class="arrow">Comenzar →</span>
       </button>
     </div>
-
     <div class="info-card">
       <span class="eyebrow">— Cómo funciona</span>
       <ol class="steps">
-        <li><strong>Ingresás</strong> tu nombre para identificarte.</li>
-        <li><strong>Elegís</strong> la categoría de premio que aplica.</li>
-        <li><strong>Seleccionás</strong> a la persona (o al equipo) a nominar.</li>
-        <li><strong>Escribís</strong> la justificación específica.</li>
-        <li><strong>Se abre Outlook</strong> con el mail ya armado. Apretás Enviar.</li>
+        <li><strong>Ingresás</strong> tu nombre.</li>
+        <li><strong>Completás</strong> las categorías que quieras: elegís a la persona (o equipo) y escribís la justificación.</li>
+        <li><strong>Revisás</strong> tus nominaciones antes de enviar.</li>
+        <li><strong>Se abre Outlook</strong> con un mail ya armado. Apretás Enviar.</li>
       </ol>
     </div>
   </div>
 </section>
 
-<!-- ============== VOTER NAME ============== -->
+<!-- ============== VOTER ============== -->
 <section class="screen" id="screen-voter">
-  <div class="hero" style="padding: 80px 40px 56px">
+  <div class="hero" style="padding:80px 40px 56px">
     <div class="hero-grid">
       <div>
-        <span class="eyebrow">— Paso 01 de 04</span>
+        <span class="eyebrow">— Paso 01</span>
         <h1 style="margin-top:18px">¿Quién <em>sos</em>?</h1>
       </div>
       <div class="hero-side">
-        <p>Tu identidad real se toma de tu cuenta de Outlook al momento de enviar. Este nombre es solo para el flujo de la página.</p>
+        <p>Tu identidad real se toma de tu cuenta de Outlook al enviar. Este nombre es solo para el flujo de la página.</p>
       </div>
     </div>
   </div>
-
   <div class="wrap-narrow">
     <div class="field">
       <label for="voterNameInput">Tu nombre</label>
       <input type="text" id="voterNameInput" placeholder="Ej: Sol Faga" autocomplete="off" />
     </div>
     <div class="alert warn" id="voterAlert" style="display:none">⚠ Por favor escribí tu nombre antes de continuar.</div>
-    <div style="display:flex; justify-content:space-between; gap: 12px; margin-top: 24px; flex-wrap: wrap;">
+    <div style="display:flex;justify-content:space-between;gap:12px;margin-top:24px;flex-wrap:wrap">
       <button class="btn btn-ghost" onclick="App.go('welcome')">← Cancelar</button>
       <button class="btn btn-primary" onclick="App.confirmVoter()">Continuar →</button>
     </div>
   </div>
 </section>
 
-<!-- ============== CATEGORY ============== -->
-<section class="screen" id="screen-category">
-  <div class="hero" style="padding: 80px 40px 56px">
+<!-- ============== HUB ============== -->
+<section class="screen" id="screen-hub">
+  <div class="hero" style="padding:64px 40px 40px">
     <div class="hero-grid">
       <div>
-        <span class="eyebrow">— Paso 02 de 04</span>
-        <h1 style="margin-top:18px">¿Qué querés<br><em>premiar</em>?</h1>
+        <span class="eyebrow">— Paso 02</span>
+        <h1 style="margin-top:18px">Tus<br><em>nominaciones</em>.</h1>
       </div>
       <div class="hero-side">
-        <p>Elegí la categoría que mejor describe el aporte de la persona o equipo que querés nominar. Podés hacer nominaciones en distintas categorías.</p>
+        <p>Completá las categorías que quieras. Podés nominar en una sola o en todas. Cuando termines, revisás y enviás todo junto.</p>
+        <p style="margin-top:12px">Votando como: <strong id="hubVoterName">—</strong></p>
       </div>
     </div>
   </div>
-
   <div class="wrap">
-    <div id="categoryGrid"></div>
-    <div style="display:flex; justify-content:flex-start; gap: 12px; margin-top: 32px; flex-wrap: wrap;">
+    <div id="hubNominations"></div>
+    <div style="display:flex;justify-content:space-between;gap:12px;margin-top:32px;flex-wrap:wrap">
       <button class="btn btn-ghost" onclick="App.go('voter')">← Atrás</button>
+      <button class="btn btn-acn" id="hubSendBtn" onclick="App.goToReview()" disabled>
+        Completá al menos una categoría para continuar
+      </button>
     </div>
   </div>
 </section>
 
-<!-- ============== VOTE ============== -->
-<section class="screen" id="screen-vote">
-  <div class="hero" style="padding: 64px 40px 40px">
+<!-- ============== NOMINEES (editor por categoría) ============== -->
+<section class="screen" id="screen-nominees">
+  <div class="hero" style="padding:64px 40px 40px">
     <div class="hero-grid">
       <div>
-        <span class="eyebrow">— Paso 03 de 04</span>
-        <h1 style="margin-top:18px">Elegí<br>a <em>quién</em>.</h1>
+        <span class="eyebrow" id="nomScreenCatBadge">Premio</span>
+        <h1 style="margin-top:14px" id="nomScreenCatName">Categoría</h1>
       </div>
       <div class="hero-side">
-        <p id="voteHint">Seleccioná a la persona que querés nominar.</p>
+        <p id="nomScreenHint">Seleccioná a la persona que querés nominar.</p>
       </div>
     </div>
   </div>
 
   <div class="wrap">
-    <div class="voter-bar">
-      <div class="voter-tag">
-        <span class="label">Votando como</span>
-        <span class="name" id="currentVoterName">—</span>
-      </div>
-      <div class="category-tag">
-        <span class="label">Categoría</span>
-        <span class="name" id="categoryContext">—</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:12px;">
-        <span class="selection-badge" id="selectionBadge">Ninguna seleccionada</span>
-        <div class="session-count">
-          Esta sesión: <strong id="sessionVoteCount" class="tabular">0</strong>
-        </div>
-      </div>
+    <div class="nom-context-bar">
+      <span class="selection-badge" id="selectionBadge">Ninguna seleccionada</span>
     </div>
 
     <div class="section-rule">
@@ -257,7 +195,6 @@
       <span class="line"></span>
     </div>
 
-    <!-- BUSCADOR + FILTROS -->
     <div class="search-bar">
       <div class="search-input-wrap">
         <span class="search-icon">⌕</span>
@@ -282,78 +219,91 @@
       </div>
     </div>
 
-    <p class="helper" id="resultCount" style="margin: 4px 0 14px"></p>
-
+    <p class="helper" id="resultCount" style="margin:4px 0 14px"></p>
     <div class="nominee-grid" id="nomineeGrid"></div>
-    <p class="helper" id="emptyResults" style="display:none; text-align:center; padding: 32px 0;">
-      No se encontraron personas con esos filtros.
-    </p>
+    <p class="helper" id="emptyResults" style="display:none;text-align:center;padding:32px 0">No se encontraron personas con esos filtros.</p>
 
-    <div class="section-rule" style="margin-top: 40px">
-      <span class="label">— Paso 04 de 04 · Justificación</span>
+    <div class="section-rule" style="margin-top:40px">
+      <span class="label">— Justificación</span>
       <span class="line"></span>
     </div>
-
-    <div class="info-card-sm" style="margin-bottom: 18px; margin-top: 0;">
-      <p>
-        <strong>Sé específico.</strong> Contá una situación concreta: qué hizo, en qué momento, qué impacto tuvo.
-        Frases genéricas no diferencian a la persona del resto y le quitan valor al reconocimiento.
-      </p>
+    <div class="info-card-sm" style="margin-bottom:18px;margin-top:0">
+      <p><strong>Sé específico.</strong> Contá una situación concreta: qué hizo, en qué momento, qué impacto tuvo.</p>
     </div>
-
     <div class="field">
       <label for="justification">¿Por qué merece este reconocimiento?</label>
-      <textarea id="justification" placeholder="Ej: 'Lideró la migración de XYZ en Q3 cuando el equipo estaba bajo presión. Su iniciativa nos ahorró 2 semanas de trabajo manual.'" maxlength="500" oninput="App.updateCharCount()"></textarea>
+      <textarea id="justification" placeholder="Ej: 'Lideró la migración de XYZ cuando el equipo estaba bajo presión. Su iniciativa nos ahorró 2 semanas.'" maxlength="500" oninput="App.updateCharCount()"></textarea>
       <div class="helper right counter">
         <span id="charCount" class="tabular">0</span> / <span id="charMax" class="tabular">500</span>
       </div>
     </div>
-
     <div class="alert warn" id="voteAlert" style="display:none">⚠ Seleccioná al menos una persona y escribí la justificación.</div>
 
-    <div style="display:flex; justify-content:space-between; gap: 12px; margin-top: 24px; flex-wrap: wrap;">
-      <button class="btn btn-ghost" onclick="App.go('category')">← Cambiar categoría</button>
-      <button class="btn btn-acn" onclick="App.submitVote()">📧 &nbsp;Abrir Outlook y enviar →</button>
+    <div style="display:flex;justify-content:space-between;gap:12px;margin-top:24px;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="App.go('hub')">← Volver al resumen</button>
+      <button class="btn btn-acn" onclick="App.saveCategory()">Guardar nominación →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============== REVIEW ============== -->
+<section class="screen" id="screen-review">
+  <div class="hero" style="padding:80px 40px 40px">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">— Paso 03</span>
+        <h1 style="margin-top:18px">Revisá<br>antes de <em>enviar</em>.</h1>
+      </div>
+      <div class="hero-side">
+        <p>Estas son tus nominaciones. Si todo está bien, abrimos Outlook con el mail ya armado.</p>
+        <p style="margin-top:12px">
+          <strong id="reviewVoterName">—</strong> · <span id="reviewCount">—</span>
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="wrap-narrow">
+    <div id="reviewContent"></div>
+    <div style="display:flex;justify-content:space-between;gap:12px;margin-top:32px;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="App.go('hub')">← Editar</button>
+      <button class="btn btn-acn" onclick="App.sendAll()">📧 &nbsp;Abrir Outlook y enviar →</button>
     </div>
   </div>
 </section>
 
 <!-- ============== SENT ============== -->
 <section class="screen" id="screen-sent">
-  <div class="hero" style="padding: 80px 40px 40px">
+  <div class="hero" style="padding:80px 40px 40px">
     <div class="hero-grid">
       <div>
         <span class="eyebrow">— ¡Listo!</span>
         <h1 style="margin-top:18px">Revisá <em>Outlook</em>.</h1>
       </div>
       <div class="hero-side">
-        <p>Acabamos de abrir un mail ya armado en tu Outlook. Apretá <strong>Enviar</strong> ahí para que tu nominación quede registrada.</p>
+        <p>Abrimos un mail ya armado en tu Outlook. Apretá <strong>Enviar</strong> para que las nominaciones queden registradas.</p>
       </div>
     </div>
   </div>
-
   <div class="wrap-narrow">
     <div class="sent-card">
-      <span class="eyebrow">— Última nominación</span>
-      <p class="helper" style="margin-bottom:4px" id="sentCategoryName">—</p>
-      <h2>Nominaste a<br><em id="sentNomineeName">—</em></h2>
-      <p class="lede" id="sentSessionLabel">—</p>
+      <span class="eyebrow">— Nominaciones enviadas</span>
+      <h2 style="margin:10px 0 4px"><em id="sentCount">—</em></h2>
+      <p class="helper" style="margin-bottom:16px">como <strong id="sentVoterName">—</strong></p>
+      <div id="sentDetail" style="margin-bottom:24px"></div>
 
       <div class="info-card info-card-sm">
         <span class="eyebrow">— ¿No se abrió Outlook?</span>
-        <p>Si no se abrió automáticamente, hacé click en el botón de abajo. También puede ser que tu navegador haya bloqueado la ventana — fijate en la barra de direcciones.</p>
-        <button class="btn btn-ghost btn-sm" onclick="App.resendLast()" style="margin-top: 10px">Reabrir Outlook</button>
+        <p>Hacé click en el botón de abajo o fijate si el navegador bloqueó la ventana.</p>
+        <button class="btn btn-ghost btn-sm" onclick="App.resendLast()" style="margin-top:10px">Reabrir Outlook</button>
       </div>
 
-      <div style="display:flex; gap: 12px; margin-top: 32px; flex-wrap: wrap;">
-        <button class="btn btn-acn" onclick="App.voteAgain()">+ Nominar en otra categoría</button>
+      <div style="display:flex;gap:12px;margin-top:32px;flex-wrap:wrap">
         <button class="btn btn-ghost" onclick="App.finishVoting()">Ya terminé</button>
       </div>
     </div>
   </div>
 </section>
 
-<!-- TOAST -->
 <div class="toast" id="toast"><span class="dot"></span><span id="toastMsg"></span></div>
 
 <footer>
