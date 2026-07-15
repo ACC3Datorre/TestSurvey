@@ -7,9 +7,10 @@ const App = (() => {
 
   let team = [];
   let currentVoter = null;
-  let nominations = {};      // { catId: { nomineeIds: [], justification: '' } }
+  let nominations = {};      // { catId: { nomineeIds: [], teamName: '', justification: '' } }
   let activeCategory = null; // objeto de CATEGORIES que está editando ahora
   let selectedNomineeIds = [];
+  let teamMode = 'grid';     // 'name' | 'grid' — solo activo para categorías de equipo
 
   let filters = {
     level: 'all',
@@ -41,14 +42,15 @@ const App = (() => {
   function initNominations() {
     nominations = {};
     cfg().CATEGORIES.forEach(cat => {
-      nominations[cat.id] = { nomineeIds: [], justification: '' };
+      nominations[cat.id] = { nomineeIds: [], teamName: '', justification: '' };
     });
   }
 
   function filledNominations() {
     return cfg().CATEGORIES.filter(cat => {
       const n = nominations[cat.id];
-      return n.nomineeIds.length > 0 && n.justification.trim().length > 0;
+      const hasNominee = n.nomineeIds.length > 0 || n.teamName.trim().length > 0;
+      return hasNominee && n.justification.trim().length > 0;
     });
   }
 
@@ -94,12 +96,14 @@ const App = (() => {
     const teamCats       = cats.filter(c => c.type === 'team');
 
     function catRow(cat) {
-      const nom    = nominations[cat.id] || { nomineeIds: [], justification: '' };
-      const filled = nom.nomineeIds.length > 0 && nom.justification.trim().length > 0;
-      const names  = nom.nomineeIds.map(id => {
-        const p = team.find(x => x.id === id);
-        return p ? p.name.split(' ')[0] : id;
-      }).join(', ');
+      const nom    = nominations[cat.id] || { nomineeIds: [], teamName: '', justification: '' };
+      const filled = (nom.nomineeIds.length > 0 || nom.teamName.trim().length > 0) && nom.justification.trim().length > 0;
+      const names  = nom.teamName
+        ? nom.teamName
+        : nom.nomineeIds.map(id => {
+            const p = team.find(x => x.id === id);
+            return p ? p.name.split(' ')[0] : id;
+          }).join(', ');
 
       return `
         <div class="hub-row ${filled ? 'hub-row--filled' : ''}">
@@ -148,19 +152,37 @@ const App = (() => {
     activeCategory = cat;
 
     // Cargar selecciones guardadas previamente
-    selectedNomineeIds = [...(nominations[cat.id].nomineeIds)];
+    const saved = nominations[cat.id];
+    selectedNomineeIds = [...(saved.nomineeIds)];
 
     // Actualizar cabecera
     const el = (id, txt) => { const e = $(id); if (e) e.textContent = txt; };
     el('nomScreenCatName',  cat.name);
     el('nomScreenCatBadge', cat.badge);
     el('nomScreenHint', cat.type === 'team'
-      ? `Seleccioná hasta ${cat.maxNominees} personas del equipo.`
+      ? `Nombrá el equipo o seleccioná hasta ${cat.maxNominees} personas.`
       : 'Seleccioná a la persona que querés nominar.');
 
     // Pre-llenar justificación guardada
     const justEl = $('justification');
-    if (justEl) justEl.value = nominations[cat.id].justification || '';
+    if (justEl) justEl.value = saved.justification || '';
+
+    // Configurar toggle de equipo
+    const toggle = $('teamModeToggle');
+    if (toggle) toggle.style.display = cat.type === 'team' ? 'block' : 'none';
+
+    if (cat.type === 'team') {
+      const mode = saved.teamName.trim() ? 'name' : 'grid';
+      switchTeamMode(mode);
+      const nameEl = $('teamNameInput');
+      if (nameEl) nameEl.value = saved.teamName || '';
+    } else {
+      teamMode = 'grid';
+      const nameSection = $('teamNameSection');
+      if (nameSection) nameSection.style.display = 'none';
+      const gridSection = $('teamGridSection');
+      if (gridSection) gridSection.style.display = 'block';
+    }
 
     resetFilters();
     renderNomineeGrid();
@@ -170,18 +192,48 @@ const App = (() => {
     go('nominees');
   }
 
+  function switchTeamMode(mode) {
+    teamMode = mode;
+    const nameBtn    = $('modeNameBtn');
+    const gridBtn    = $('modeGridBtn');
+    const nameSection = $('teamNameSection');
+    const gridSection = $('teamGridSection');
+
+    if (mode === 'name') {
+      if (nameBtn) nameBtn.classList.add('active');
+      if (gridBtn) gridBtn.classList.remove('active');
+      if (nameSection) nameSection.style.display = 'block';
+      if (gridSection) gridSection.style.display = 'none';
+      selectedNomineeIds = [];
+    } else {
+      if (nameBtn) nameBtn.classList.remove('active');
+      if (gridBtn) gridBtn.classList.add('active');
+      if (nameSection) nameSection.style.display = 'none';
+      if (gridSection) gridSection.style.display = 'block';
+      const nameEl = $('teamNameInput');
+      if (nameEl) nameEl.value = '';
+      renderNomineeGrid();
+    }
+    updateSelectionBadge();
+  }
+
   function saveCategory() {
     const just = $('justification').value.trim();
-    if (selectedNomineeIds.length === 0 || !just) {
-      $('voteAlert').style.display = 'block';
-      return;
+    let nomineeIds = [...selectedNomineeIds];
+    let teamName = '';
+
+    if (activeCategory.type === 'team' && teamMode === 'name') {
+      teamName = ($('teamNameInput').value || '').trim();
+      nomineeIds = [];
+      if (!teamName || !just) { $('voteAlert').style.display = 'block'; return; }
+    } else {
+      if (nomineeIds.length === 0 || !just) { $('voteAlert').style.display = 'block'; return; }
     }
-    nominations[activeCategory.id] = {
-      nomineeIds: [...selectedNomineeIds],
-      justification: just
-    };
+
+    nominations[activeCategory.id] = { nomineeIds, teamName, justification: just };
     activeCategory = null;
     selectedNomineeIds = [];
+    teamMode = 'grid';
     renderHub();
     go('hub');
   }
@@ -303,6 +355,10 @@ const App = (() => {
   function updateSelectionBadge() {
     const badge = $('selectionBadge');
     if (!badge || !activeCategory) return;
+    if (activeCategory.type === 'team' && teamMode === 'name') {
+      badge.textContent = 'Nominar por nombre de equipo';
+      return;
+    }
     const count = selectedNomineeIds.length;
     badge.textContent = activeCategory.type === 'individual'
       ? (count ? '1 seleccionada' : 'Ninguna seleccionada')
@@ -343,10 +399,12 @@ const App = (() => {
 
     container.innerHTML = filled.map(cat => {
       const nom   = nominations[cat.id];
-      const names = nom.nomineeIds.map(id => {
-        const p = team.find(x => x.id === id);
-        return p ? p.name : id;
-      }).join(', ');
+      const names = nom.teamName
+        ? nom.teamName
+        : nom.nomineeIds.map(id => {
+            const p = team.find(x => x.id === id);
+            return p ? p.name : id;
+          }).join(', ');
       return `
         <div class="review-card">
           <span class="review-cat-badge">${cat.badge}</span>
@@ -371,10 +429,12 @@ const App = (() => {
       .trim();
   }
   function sanitizeForBody(text) {
-    // Eliminar separadores ~ y | para que el parseo en Power Automate sea limpio
+    // Eliminar caracteres que rompen el parseo en Power Automate
     return String(text)
       .replace(/~/g, '-')
       .replace(/\|/g, '/')
+      .replace(/</g, '(')
+      .replace(/>/g, ')')
       .replace(/[\r\n]+/g, ' ')
       .trim();
   }
@@ -399,9 +459,9 @@ const App = (() => {
     // Siempre las 5 categorías en orden fijo; vacías si no fueron nominadas
     const body = c.CATEGORIES.map(cat => {
       const nom    = nominations[cat.id];
-      const nomStr = (nom && nom.nomineeIds.length > 0)
-        ? nom.nomineeIds.join(c.MAIL.NOMINEE_SEP)
-        : '';
+      const nomStr = (nom && nom.teamName && nom.teamName.trim())
+        ? sanitizeForBody(nom.teamName)
+        : (nom && nom.nomineeIds.length > 0) ? nom.nomineeIds.join(c.MAIL.NOMINEE_SEP) : '';
       const just   = (nom && nom.justification.trim())
         ? sanitizeForBody(nom.justification)
         : '';
@@ -432,10 +492,12 @@ const App = (() => {
     if (detail) {
       detail.innerHTML = filled.map(cat => {
         const nom   = nominations[cat.id];
-        const names = nom.nomineeIds.map(id => {
-          const p = team.find(x => x.id === id);
-          return p ? p.name : id;
-        }).join(', ');
+        const names = nom.teamName
+          ? nom.teamName
+          : nom.nomineeIds.map(id => {
+              const p = team.find(x => x.id === id);
+              return p ? p.name : id;
+            }).join(', ');
         return `<div class="sent-row"><strong>${cat.name}:</strong> ${names}</div>`;
       }).join('');
     }
@@ -463,7 +525,7 @@ const App = (() => {
 
   return {
     init, go, startSurvey, confirmVoter,
-    openCategoryEditor, saveCategory,
+    openCategoryEditor, saveCategory, switchTeamMode,
     selectNominee, updateCharCount, updateSelectionBadge,
     goToReview, sendAll, resendLast, finishVoting,
     setFilter, applyFilters, clearSearch
