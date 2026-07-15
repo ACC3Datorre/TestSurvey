@@ -190,6 +190,29 @@
       <span class="selection-badge" id="selectionBadge">Ninguna seleccionada</span>
     </div>
 
+    <!-- Toggle modo equipo — solo Dream Team y Big Hearts -->
+    <div id="teamModeToggle" style="display:none; margin-bottom:20px">
+      <div class="section-rule" style="margin-bottom:16px">
+        <span class="label">— ¿Cómo querés nominar?</span>
+        <span class="line"></span>
+      </div>
+      <div class="filter-group" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:0">
+        <button class="filter-chip" id="modeNameBtn" onclick="App.switchTeamMode('name')">Nombrar equipo</button>
+        <button class="filter-chip" id="modeGridBtn" onclick="App.switchTeamMode('grid')">Elegir personas</button>
+      </div>
+    </div>
+
+    <!-- Campo nombre de equipo (visible en modo 'name') -->
+    <div id="teamNameSection" style="display:none; margin-bottom:24px">
+      <div class="field">
+        <label for="teamNameInput">Nombre del equipo</label>
+        <input type="text" id="teamNameInput" placeholder="Ej: IA Factory, CFO Consulting Lab..." autocomplete="off" maxlength="100" />
+      </div>
+    </div>
+
+    <!-- Grilla (visible en modo 'grid' o categorías individuales) -->
+    <div id="teamGridSection">
+
     <div class="section-rule">
       <span class="label">— Elegí a la persona</span>
       <span class="line"></span>
@@ -222,6 +245,8 @@
     <p class="helper" id="resultCount" style="margin:4px 0 14px"></p>
     <div class="nominee-grid" id="nomineeGrid"></div>
     <p class="helper" id="emptyResults" style="display:none;text-align:center;padding:32px 0">No se encontraron personas con esos filtros.</p>
+
+    </div><!-- /teamGridSection -->
 
     <div class="section-rule" style="margin-top:40px">
       <span class="label">— Justificación</span>
