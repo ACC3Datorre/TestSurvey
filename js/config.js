@@ -27,7 +27,7 @@ window.APP_CONFIG = {
       description: 'Para ejecutivos que coachearon, inspiraron y motivaron a otros en su desarrollo personal y profesional.',
       type: 'individual',
       maxNominees: 1,
-      eligibleLevels: ['Manager', 'Senior Manager', 'Associate Director'],
+      eligibleLevels: ['M. Director', 'Manager', 'Senior Manager', 'Associate Director'],
       badge: 'Premio Individual'
     },
     {
